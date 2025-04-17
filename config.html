@@ -15,7 +15,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #18181b; /* Change background color */
+            background-color: #18181b;
         }
         form {
             display: flex;
@@ -24,88 +24,48 @@
         }
         label, input {
             font-family: 'Inter', sans-serif;
-            font-size: 16px; /* Adjusted font size */
+            font-size: 16px;
             margin: 5px;
             color: white;
         }
         input {
-            background-color: #3c404d; /* Change input fields background color */
+            background-color: #3c404d;
             color: white;
             border: none;
-            border-radius: 5px; /* Make input fields slightly rounded */
-            padding: 5px 10px; /* Adjusted padding to move cursor away from edge */
-            margin-bottom: 5px; /* Reduced margin-bottom for spacing */
-            width: 280px; /* Set a fixed width for alignment */
-            height: 25px !important; /* Set height to match buttons */
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            width: 280px;
+            height: 25px !important;
         }
         input:focus {
-            outline: none; /* Remove white border around the text field while selected */
-        }
-        label {
-            margin-bottom: 5px; /* Add margin-bottom for spacing */
+            outline: none;
         }
         .button-container {
             display: flex;
             justify-content: space-between;
-            width: 100%; /* Ensure the buttons take the full width of the form */
+            width: 100%;
         }
         button {
             font-family: 'Inter', sans-serif;
-            font-size: 16px; /* Adjusted font size */
-            margin: 5px 5px 0 5px; /* Reduced margins to fit the buttons */
-            padding: 5px 10px; /* Adjusted padding */
-            background-color: #3c404d; /* Change button color */
+            font-size: 16px;
+            margin: 5px 5px 0 5px;
+            padding: 5px 10px;
+            background-color: #3c404d;
             color: white;
             border: none;
-            border-radius: 5px; /* Make buttons slightly rounded */
             cursor: pointer;
-            flex: 1; /* Make buttons take equal space */
-            max-width: 140px; /* Make the buttons less wide */
-            height: 35px; /* Set height to match input */
+            flex: 1;
+            max-width: 140px;
+            height: 35px;
         }
         button:hover {
             background-color: #4a4e5a;
         }
-        #confirmation {
+        #notification {
             margin-top: 20px;
             font-family: 'Inter', sans-serif;
-            font-size: 16px; /* Adjusted font size */
+            font-size: 16px;
             color: white;
-        }
-        .updated {
-            color: green;
-            font-family: 'Inter', sans-serif; /* Same font as Table ID */
-            font-size: 16px; /* Same size as Table ID */
-            margin-left: 10px;
-        }
-        .inline-container {
-            display: flex;
-            align-items: center;
-        }
-        .inline-container label {
-            margin-right: 10px;
-        }
-        .inline-container input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin: 0 5px;
-        }
-        .inline-container input[type="color"] {
-            width: 20px; /* Make the color picker a square */
-            height: 20px !important; /* Make the color picker a square */
-            margin: 0 5px; /* Align with the checkbox */
-            padding: 0; /* Remove padding */
-            border: none; /* Remove border */
-            background: none; /* Remove background */
-            -webkit-appearance: none; /* Remove default appearance for WebKit browsers */
-            appearance: none; /* Remove default appearance */
-            border-radius: 2px;
-        }
-        .inline-container input[type="color"]::-webkit-color-swatch-wrapper {
-            padding: 0; /* Remove padding from the color swatch wrapper */
-        }
-        .inline-container input[type="color"]::-webkit-color-swatch {
-            border: none; /* Remove border from the color swatch */
         }
         .notification {
             position: fixed;
@@ -129,19 +89,9 @@
 <body>
     <!-- Form to configure team scores -->
     <form id="configForm">
-        <label for="table_id">Table ID:<span id="table_id_updated" class="updated"></span></label>
+        <label for="table_id">Table ID:</label>
         <input type="text" id="table_id" name="table_id" pattern="\d*" title="Only numbers are allowed">
         
-        <label for="border_radius">Corner Roundness (0-10):<span id="border_radius_updated" class="updated"></span></label>
-        <input type="number" id="border_radius" name="border_radius" min="0" max="10">
-
-        <div class="inline-container">
-            <label for="border_toggle">Border:</label>
-            <input type="checkbox" id="border_toggle" name="border_toggle">
-            <label for="color_picker">Background Color:</label>
-            <input type="color" id="color_picker" name="color_picker">
-        </div>
-
         <!-- Player name is set to "blitzu" and hidden -->
         <input type="hidden" id="player_name" name="player_name" value="blitzu">
         
@@ -167,9 +117,6 @@
         document.getElementById('configForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const tableId = document.getElementById('table_id').value;
-            const borderRadius = document.getElementById('border_radius').value;
-            const borderToggle = document.getElementById('border_toggle').checked;
-            const colorPicker = document.getElementById('color_picker').value;
             const playerName = document.getElementById('player_name').value;
 
             // Validate Table ID to ensure it only contains numbers
@@ -178,60 +125,24 @@
                 return;
             }
 
-            // Validate Border Radius to ensure it is between 0 and 10
-            if (borderRadius < 0 || borderRadius > 10) {
-                alert('Corner Roundness must be between 0 and 10.');
-                return;
-            }
-
             // Store the values in localStorage
             localStorage.setItem('TABLE_ID', tableId);
-            localStorage.setItem('BORDER_RADIUS', borderRadius);
-            localStorage.setItem('BORDER_TOGGLE', borderToggle);
-            localStorage.setItem('COLOR_PICKER', colorPicker);
             localStorage.setItem('PLAYER_NAME', playerName);
 
             showNotification('Updated');
 
             // Trigger custom events to update other pages
             window.dispatchEvent(new Event('storage'));
-
-            // Update the color of the name cells immediately
-            document.querySelectorAll('.name-cell').forEach(cell => {
-                cell.style.color = colorPicker;
-            });
         });
 
         // Reset button functionality
         document.getElementById('resetButton').addEventListener('click', function() {
             localStorage.removeItem('TABLE_ID');
-            localStorage.removeItem('BORDER_RADIUS');
-            localStorage.removeItem('BORDER_TOGGLE');
-            localStorage.removeItem('COLOR_PICKER');
             localStorage.removeItem('PLAYER_NAME');
             document.getElementById('table_id').value = '';
-            document.getElementById('border_radius').value = '';
-            document.getElementById('border_toggle').checked = false;
-            document.getElementById('color_picker').value = '#000000';
 
             showNotification('Reset');
         });
-
-        // Update border immediately without page refresh
-        document.getElementById('border_toggle').addEventListener('change', function() {
-            const borderToggle = document.getElementById('border_toggle').checked;
-            localStorage.setItem('BORDER_TOGGLE', borderToggle);
-            window.dispatchEvent(new Event('storage'));
-        });
-
-        // Apply stored color to name cells on page load
-        const storedColor = localStorage.getItem('COLOR_PICKER');
-        if (storedColor) {
-            document.getElementById('color_picker').value = storedColor;
-            document.querySelectorAll('.name-cell').forEach(cell => {
-                cell.style.color = storedColor;
-            });
-        }
     </script>
 </body>
 </html>
