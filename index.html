@@ -20,11 +20,8 @@
             padding: 20px; /* Add padding to all sides (top, right, bottom, left) */
             padding-top: 50px; /* Add more padding to the top to prevent cut-off */
         }
-        .highlight {
-            color: black; /* Highlight color for blitzu's team */
-        }
-        .white-text {
-            color: black; /* White color for race number and divider */
+        .highlight, .race-divider {
+            color: hsl(0, 100%, 0%); /* Highlight color for player's team */
         }
         .tag {
             display: inline-block;
@@ -60,11 +57,11 @@
                     let racesPlayedText = '';
                     
                     if (racesPlayed) {
-                        racesPlayedText = `<span class="white-text">R${racesPlayed.textContent.replace(' races', '')}</span>`;
+                        racesPlayedText = `<span class="race-divider">R${racesPlayed.textContent.replace(' races', '')}</span>`;
                     }
                     
                     if (teams.length === 0) {
-                        const playerScore = Array.from(doc.querySelectorAll('.player_name')).find(player => player.textContent.trim() === playerName)?.nextElementSibling?.textContent.trim() || 'N/A';
+                        const playerScore = Array.from(doc.querySelectorAll('.player_name')).find(player => player.textContent.trim() === playerName)?.nextElementSibling?.textContent.trim() || 'N/[...]';
                         scoresContainer.innerHTML = `${racesPlayedText} | <span class="highlight">ffa [${playerScore}]</span>`;
                         return;
                     }
@@ -84,7 +81,7 @@
                         return `<span class="tag ${hasPlayer ? 'highlight' : ''}">[${teamName}] ${teamScore}</span>`;
                     });
                     
-                    scoresContainer.innerHTML = `${racesPlayedText} <span class="white-text">|</span> ` + teamElements.join('');
+                    scoresContainer.innerHTML = `${racesPlayedText} <span class="race-divider">|</span> ` + teamElements.join('');
                 })
                 .catch(error => {
                     console.error('Error fetching data:', error);
