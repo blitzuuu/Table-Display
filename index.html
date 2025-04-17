@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mogi Scores</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start; /* Align items at the top */
+            height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Prevent scrollbars */
+            background-color: transparent; /* Make background transparent */
+            font-family: 'Roboto Mono', monospace;
+            font-size: 30px; /* Main font size */
+            font-weight: 500;
+            color: #2c3e50; /* Light grey color for all team names and scores */
+            padding: 20px; /* Add padding to all sides (top, right, bottom, left) */
+            padding-top: 50px; /* Add more padding to the top to prevent cut-off */
+        }
+        .highlight {
+            color: black; /* Highlight color for blitzu's team */
+        }
+        .white-text {
+            color: black; /* White color for race number and divider */
+        }
+        .tag {
+            display: inline-block;
+            margin-right: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="scores"></div>
+    
+    <script>
+        let tableId = localStorage.getItem('TABLE_ID') || 'default'; // Default TABLE_ID
+        const playerName = localStorage.getItem('PLAYER_NAME') || 'blitzu'; // Default player name
+        let url = `https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`;
+        
+        function fetchAndUpdateScores() {
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    const scoresContainer = document.getElementById('scores');
+                    scoresContainer.innerHTML = ''; // Clear existing content
+                    
+                    let teams = Array.from(doc.querySelectorAll('.team_wrapper'));
+                    const racesPlayed = doc.querySelector('.races_played');
+                    let racesPlayedText = '';
+                    
+                    if (racesPlayed) {
+                        racesPlayedText = `<span class="white-text">R${racesPlayed.textContent.replace(' races', '')}</span>`;
+                    }
+                    
+                    if (teams.length === 0) {
+                        const playerScore = Array.from(doc.querySelectorAll('.player_name')).find(player => player.textContent.trim() === playerName)?.nextElementSibling?.textContent.trim() || 'N/A';
+                        scoresContainer.innerHTML = `${racesPlayedText} | <span class="highlight">ffa [${playerScore}]</span>`;
+                        return;
+                    }
+                    
+                    // Sort teams by score
+                    teams = teams.sort((teamA, teamB) => {
+                        const scoreA = parseInt(teamA.querySelector('.team_score').textContent.trim(), 10);
+                        const scoreB = parseInt(teamB.querySelector('.team_score').textContent.trim(), 10);
+                        return scoreB - scoreA;
+                    });
+                    
+                    const teamElements = teams.map(team => {
+                        const teamName = team.querySelector('.team_name').textContent.trim();
+                        const teamScore = team.querySelector('.team_score').textContent.trim();
+                        const hasPlayer = Array.from(team.querySelectorAll('.player_name')).some(player => player.textContent.trim() === playerName);
+                        
+                        return `<span class="tag ${hasPlayer ? 'highlight' : ''}">[${teamName}] ${teamScore}</span>`;
+                    });
+                    
+                    scoresContainer.innerHTML = `${racesPlayedText} <span class="white-text">|</span> ` + teamElements.join('');
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
+        }
+        
+        function updateTableId(newTableId) {
+            if (newTableId !== tableId) {
+                tableId = newTableId;
+                url = `https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`;
+                fetchAndUpdateScores();
+            }
+        }
+        
+        function resetTable() {
+            localStorage.removeItem('TABLE_ID');
+            tableId = 'default';
+            url = `https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`;
+            fetchAndUpdateScores(); // Call this function to update the scores immediately
+        }
+        
+        // Monitor local storage for changes to TABLE_ID
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'TABLE_ID') {
+                updateTableId(event.newValue || 'default');
+            }
+        });
+        
+        // Fetch and update scores every 10 seconds
+        setInterval(fetchAndUpdateScores, 10000);
+        
+        // Initial fetch
+        fetchAndUpdateScores();
+    </script>
+</body>
+</html>
