@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Config Page</title>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        // Fetch player_data.json
+        const response = await fetch("player_data.json");
+        if (!response.ok) {
+          throw new Error("Failed to load player_data.json");
+        }
+        const playerData = await response.json();
+
+        // Extract valid names
+        const validNames = playerData.map(player => player.name);
+
+        // Get the 'name' query parameter from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const name = urlParams.get("name");
+
+        // Validate the 'name' parameter
+        if (!name || !validNames.includes(name)) {
+          alert("Invalid or missing 'name' parameter!");
+          window.location.href = "error.html"; // Redirect if invalid
+          return;
+        }
+
+        // Allow configuration for the valid 'name'
+        document.getElementById("config-content").innerText = `Configuring settings for ${name}`;
+
+        // Save button functionality
+        document.getElementById("save-btn").addEventListener("click", () => {
+          alert(`Changes saved for ${name}`);
+          // Add logic to save changes if needed
+        });
+      } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred while loading the page.");
+      }
+    });
+  </script>
+</head>
+<body>
+  <h1>Config Page</h1>
+  <p id="config-content">Loading...</p>
+  <button id="save-btn">Save Changes</button>
+</body>
+</html>
