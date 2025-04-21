@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Index Page</title>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        // Fetch player_data.json
+        const response = await fetch("player_data.json");
+        if (!response.ok) {
+          throw new Error("Failed to load player_data.json");
+        }
+        const playerData = await response.json();
+
+        // Extract valid names
+        const validNames = playerData.map(player => player.name);
+
+        // Get the 'name' query parameter from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const name = urlParams.get("name");
+
+        // Validate the 'name' parameter
+        if (!name || !validNames.includes(name)) {
+          alert("Invalid or missing 'name' parameter!");
+          window.location.href = "error.html"; // Redirect if invalid
+          return;
+        }
+
+        // Fetch and display table data (replace 'table.csv' with the actual file path)
+        const tableResponse = await fetch("table.csv");
+        if (!tableResponse.ok) {
+          throw new Error("Failed to load table data");
+        }
+        const tableText = await tableResponse.text();
+        const tableRows = tableText.split("\n").map(row => row.split(","));
+
+        // Create and populate the table
+        const tableElement = document.createElement("table");
+        tableRows.forEach((row, index) => {
+          const tableRow = document.createElement("tr");
+          row.forEach(cell => {
+            const cellElement = index === 0 ? document.createElement("th") : document.createElement("td");
+            cellElement.textContent = cell;
+            tableRow.appendChild(cellElement);
+          });
+          tableElement.appendChild(tableRow);
+        });
+        document.getElementById("table-container").appendChild(tableElement);
+      } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred while loading the page.");
+      }
+    });
+  </script>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Index Page</h1>
+  <div id="table-container">Loading table...</div>
+</body>
+</html>
