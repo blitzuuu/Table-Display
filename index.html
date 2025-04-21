@@ -14,40 +14,28 @@
         }
         const playerData = await response.json();
 
-        // Extract valid names
-        const validNames = playerData.map(player => player.name);
-
         // Get the 'name' query parameter from the URL
         const urlParams = new URLSearchParams(window.location.search);
         const name = urlParams.get("name");
 
         // Validate the 'name' parameter
-        if (!name || !validNames.includes(name)) {
+        const player = playerData.find(player => player.name === name);
+        if (!player) {
           alert("Invalid or missing 'name' parameter!");
           window.location.href = "error.html"; // Redirect if invalid
           return;
         }
 
-        // Fetch and display table data (replace 'table.csv' with the actual file path)
-        const tableResponse = await fetch("table.csv");
+        // Fetch the table using the player's ID
+        const tableId = player.id;
+        const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`);
         if (!tableResponse.ok) {
-          throw new Error("Failed to load table data");
+          throw new Error("Failed to fetch the table data");
         }
-        const tableText = await tableResponse.text();
-        const tableRows = tableText.split("\n").map(row => row.split(","));
+        const tableHTML = await tableResponse.text();
 
-        // Create and populate the table
-        const tableElement = document.createElement("table");
-        tableRows.forEach((row, index) => {
-          const tableRow = document.createElement("tr");
-          row.forEach(cell => {
-            const cellElement = index === 0 ? document.createElement("th") : document.createElement("td");
-            cellElement.textContent = cell;
-            tableRow.appendChild(cellElement);
-          });
-          tableElement.appendChild(tableRow);
-        });
-        document.getElementById("table-container").appendChild(tableElement);
+        // Display the fetched table
+        document.getElementById("table-container").innerHTML = tableHTML;
       } catch (error) {
         console.error("Error:", error);
         alert("An error occurred while loading the page.");
