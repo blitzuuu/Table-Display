@@ -14,9 +14,6 @@
         // If 'tableid' is missing, silently stop execution
         if (!tableId) return;
 
-        // Get the 'name' query parameter from the URL (optional)
-        const name = urlParams.get("name");
-
         // Fetch the table using the 'tableid'
         const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`);
         if (!tableResponse.ok) return;
@@ -24,15 +21,10 @@
         const tableHTML = await tableResponse.text();
 
         // Parse and format the table data
-        const parsedData = parseTableData(tableHTML);
+        const formattedData = parseAndFormatTableData(tableHTML);
 
         // Render the formatted data
-        renderFormattedData(parsedData);
-
-        // Optionally display a welcome message for the 'name'
-        if (name) {
-          document.getElementById("welcome-message").innerText = `Welcome, ${name}!`;
-        }
+        renderFormattedData(formattedData);
       } catch (error) {
         // Silently handle errors (do nothing)
         console.error(error); // Only logged to the console for debugging
@@ -40,64 +32,60 @@
     });
 
     /**
-     * Parses the raw table HTML and extracts the relevant data for formatting.
+     * Parses the raw table HTML and formats the data.
      * @param {string} rawHTML - The raw HTML of the table.
-     * @returns {Object} Parsed data including race number and tag scores.
+     * @returns {string} Formatted data string.
      */
-    function parseTableData(rawHTML) {
+    function parseAndFormatTableData(rawHTML) {
       // Create a temporary element to parse HTML
       const tempElement = document.createElement("div");
       tempElement.innerHTML = rawHTML;
 
-      // Extract the race information and scores
-      const raceNumberElement = tempElement.querySelector("p"); // Assuming race info is in a <p> tag
-      const raceNumber = raceNumberElement ? raceNumberElement.textContent.match(/\d+/)[0] : "1"; // Default to 1 if not found
-
+      // Extract the relevant data (rows and scores)
       const rows = Array.from(tempElement.querySelectorAll("tr")); // Assuming scores are in <tr> tags
       const tagScores = [];
 
+      let raceNumber = "1"; // Default to R1
       rows.forEach((row) => {
         const cells = Array.from(row.querySelectorAll("td"));
         if (cells.length === 5) {
           // Assuming the tag and score data is in the 5 columns
           const tag = cells[0].textContent.trim(); // Column 1: Tag
-          const score = cells[1].textContent.trim(); // Column 2: Score
+          const score = cells[3].textContent.trim(); // Column 4: Total Score
           tagScores.push({ tag, score });
         }
       });
 
-      return { raceNumber, tagScores };
+      // Format the data
+      const formattedScores = tagScores.map(({ tag, score }) => `[${tag}] ${score}`).join(" | ");
+      return `R${raceNumber} | ${formattedScores}`;
     }
 
     /**
      * Renders the formatted data into the page.
-     * @param {Object} data - The parsed table data.
+     * @param {string} formattedData - The formatted data string.
      */
-    function renderFormattedData(data) {
-      const { raceNumber, tagScores } = data;
-
-      // Construct the formatted string
-      const formattedScores = tagScores.map(({ tag, score }) => `[${tag}] ${score}`).join(" | ");
-      const formattedOutput = `R${raceNumber} | ${formattedScores}`;
-
-      // Render the formatted output in the table container
+    function renderFormattedData(formattedData) {
       const tableContainer = document.getElementById("table-container");
-      tableContainer.textContent = formattedOutput;
+      tableContainer.textContent = formattedData;
     }
   </script>
   <style>
     body {
       font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
     }
     #table-container {
-      margin-top: 20px;
+      position: absolute;
+      top: 10px;
+      left: 10px;
       font-size: 18px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h1>Index Page</h1>
-  <p id="welcome-message"></p>
   <div id="table-container"></div>
 </body>
 </html>
