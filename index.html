@@ -23,8 +23,11 @@
 
         const tableHTML = await tableResponse.text();
 
-        // Display the fetched table
-        document.getElementById("table-container").innerHTML = tableHTML;
+        // Parse and format the table data
+        const parsedData = parseTableData(tableHTML);
+
+        // Render the formatted data
+        renderFormattedData(parsedData);
 
         // Optionally display a welcome message for the 'name'
         if (name) {
@@ -35,19 +38,60 @@
         console.error(error); // Only logged to the console for debugging
       }
     });
+
+    /**
+     * Parses the raw table HTML and extracts the relevant data for formatting.
+     * @param {string} rawHTML - The raw HTML of the table.
+     * @returns {Object} Parsed data including race number and tag scores.
+     */
+    function parseTableData(rawHTML) {
+      // Create a temporary element to parse HTML
+      const tempElement = document.createElement("div");
+      tempElement.innerHTML = rawHTML;
+
+      // Extract the race information and scores
+      const raceNumberElement = tempElement.querySelector("p"); // Assuming race info is in a <p> tag
+      const raceNumber = raceNumberElement ? raceNumberElement.textContent.match(/\d+/)[0] : "1"; // Default to 1 if not found
+
+      const rows = Array.from(tempElement.querySelectorAll("tr")); // Assuming scores are in <tr> tags
+      const tagScores = [];
+
+      rows.forEach((row) => {
+        const cells = Array.from(row.querySelectorAll("td"));
+        if (cells.length === 5) {
+          // Assuming the tag and score data is in the 5 columns
+          const tag = cells[0].textContent.trim(); // Column 1: Tag
+          const score = cells[1].textContent.trim(); // Column 2: Score
+          tagScores.push({ tag, score });
+        }
+      });
+
+      return { raceNumber, tagScores };
+    }
+
+    /**
+     * Renders the formatted data into the page.
+     * @param {Object} data - The parsed table data.
+     */
+    function renderFormattedData(data) {
+      const { raceNumber, tagScores } = data;
+
+      // Construct the formatted string
+      const formattedScores = tagScores.map(({ tag, score }) => `[${tag}] ${score}`).join(" | ");
+      const formattedOutput = `R${raceNumber} | ${formattedScores}`;
+
+      // Render the formatted output in the table container
+      const tableContainer = document.getElementById("table-container");
+      tableContainer.textContent = formattedOutput;
+    }
   </script>
   <style>
-    table {
-      border-collapse: collapse;
-      width: 100%;
+    body {
+      font-family: Arial, sans-serif;
     }
-    th, td {
-      border: 1px solid black;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #f2f2f2;
+    #table-container {
+      margin-top: 20px;
+      font-size: 18px;
     }
   </style>
 </head>
