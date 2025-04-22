@@ -11,10 +11,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         const tableId = urlParams.get("tableid");
 
-        // Redirect or show an error if 'tableid' is missing
+        // Display a friendly message if 'tableid' is missing
         if (!tableId) {
-          alert("Missing 'tableid' parameter!");
-          window.location.href = "error.html"; // Redirect to error page
+          document.getElementById("table-container").innerHTML = 
+            "<p style='color: red;'>Error: Missing 'tableid' parameter in the URL. Please provide a valid table ID.</p>";
           return;
         }
 
@@ -24,7 +24,9 @@
         // Fetch the table using the 'tableid'
         const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`);
         if (!tableResponse.ok) {
-          throw new Error("Failed to fetch the table data");
+          document.getElementById("table-container").innerHTML = 
+            "<p style='color: red;'>Error: Failed to fetch the table data. Please check the 'tableid' and try again.</p>";
+          return;
         }
         const tableHTML = await tableResponse.text();
 
@@ -37,7 +39,8 @@
         }
       } catch (error) {
         console.error("Error:", error);
-        alert("An error occurred while loading the page.");
+        document.getElementById("table-container").innerHTML = 
+          "<p style='color: red;'>An unexpected error occurred. Please try again later.</p>";
       }
     });
   </script>
