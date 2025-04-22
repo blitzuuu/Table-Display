@@ -7,27 +7,21 @@
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       try {
-        // Fetch player_data.json
-        const response = await fetch("player_data.json");
-        if (!response.ok) {
-          throw new Error("Failed to load player_data.json");
-        }
-        const playerData = await response.json();
-
-        // Get the 'name' query parameter from the URL
+        // Get the 'tableid' query parameter from the URL (required)
         const urlParams = new URLSearchParams(window.location.search);
-        const name = urlParams.get("name");
+        const tableId = urlParams.get("tableid");
 
-        // Validate the 'name' parameter
-        const player = playerData.find(player => player.name === name);
-        if (!player) {
-          alert("Invalid or missing 'name' parameter!");
-          window.location.href = "error.html"; // Redirect if invalid
+        // Redirect or show an error if 'tableid' is missing
+        if (!tableId) {
+          alert("Missing 'tableid' parameter!");
+          window.location.href = "error.html"; // Redirect to error page
           return;
         }
 
-        // Fetch the table using the player's ID
-        const tableId = player.id;
+        // Get the 'name' query parameter from the URL (optional)
+        const name = urlParams.get("name");
+
+        // Fetch the table using the 'tableid'
         const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`);
         if (!tableResponse.ok) {
           throw new Error("Failed to fetch the table data");
@@ -36,6 +30,11 @@
 
         // Display the fetched table
         document.getElementById("table-container").innerHTML = tableHTML;
+
+        // Optionally display a welcome message for the 'name'
+        if (name) {
+          document.getElementById("welcome-message").innerText = `Welcome, ${name}!`;
+        }
       } catch (error) {
         console.error("Error:", error);
         alert("An error occurred while loading the page.");
@@ -59,6 +58,7 @@
 </head>
 <body>
   <h1>Index Page</h1>
+  <p id="welcome-message"></p>
   <div id="table-container">Loading table...</div>
 </body>
 </html>
