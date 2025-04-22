@@ -14,7 +14,7 @@
         // If 'tableid' is missing, silently stop execution
         if (!tableId) return;
 
-        // Fetch the table using the 'tableid'
+        // Fetch the table data using the 'tableid'
         const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`);
         if (!tableResponse.ok) return;
 
@@ -41,30 +41,21 @@
       const tempElement = document.createElement("div");
       tempElement.innerHTML = rawHTML;
 
-      // Extract the race count (e.g., "2 races") from the first paragraph or relevant tag
-      const raceInfo = tempElement.querySelector("p")?.textContent || "";
+      // Extract the race count (e.g., "12 races") from the header
+      const raceInfo = tempElement.querySelector(".races_played")?.textContent || "";
       const raceMatch = raceInfo.match(/(\d+)\s*races?/i);
       const raceNumber = raceMatch ? raceMatch[1] : "1";
 
-      // Extract tag scores from the table rows
-      const rows = Array.from(tempElement.querySelectorAll("tr"));
-      const tagScores = [];
-
-      rows.forEach((row) => {
-        const cells = Array.from(row.querySelectorAll("td"));
-        if (cells.length >= 4) {
-          // Assuming the tag is in column 1 and the total score is in column 4
-          const tag = cells[0].textContent.trim();
-          const score = cells[3].textContent.trim();
-          if (tag && score) {
-            tagScores.push({ tag, score });
-          }
-        }
+      // Extract team scores from the table
+      const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
+      const teamScores = teams.map((team) => {
+        const teamName = team.querySelector(".team_name")?.textContent.trim() || "Unknown";
+        const teamScore = team.querySelector(".team_score")?.textContent.trim() || "0";
+        return `[${teamName}] ${teamScore}`;
       });
 
-      // Format the data
-      const formattedScores = tagScores.map(({ tag, score }) => `[${tag}] ${score}`).join(" | ");
-      return `R${raceNumber} | ${formattedScores}`;
+      // Format the output
+      return `R${raceNumber} | ${teamScores.join(" | ")}`;
     }
 
     /**
