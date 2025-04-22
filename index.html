@@ -7,9 +7,10 @@
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       try {
-        // Get the 'tableid' query parameter from the URL (required)
+        // Get the 'tableid' and 'name' query parameters from the URL
         const urlParams = new URLSearchParams(window.location.search);
         const tableId = urlParams.get("tableid");
+        const playerName = urlParams.get("name");
 
         // If 'tableid' is missing, silently stop execution
         if (!tableId) return;
@@ -21,7 +22,7 @@
         const tableHTML = await tableResponse.text();
 
         // Parse and format the table data
-        const formattedData = parseAndFormatTableData(tableHTML);
+        const formattedData = parseAndFormatTableData(tableHTML, playerName);
 
         // Render the formatted data
         renderFormattedData(formattedData);
@@ -33,10 +34,12 @@
 
     /**
      * Parses the raw table HTML and formats the data.
+     * If a player's name matches the 'name' parameter, underline their team's tag and score.
      * @param {string} rawHTML - The raw HTML of the table.
-     * @returns {string} Formatted data string.
+     * @param {string|null} playerName - The name to check for.
+     * @returns {string} Formatted data string with underlined matching teams.
      */
-    function parseAndFormatTableData(rawHTML) {
+    function parseAndFormatTableData(rawHTML, playerName) {
       // Create a temporary element to parse HTML
       const tempElement = document.createElement("div");
       tempElement.innerHTML = rawHTML;
@@ -46,12 +49,21 @@
       const raceMatch = raceInfo.match(/(\d+)\s*races?/i);
       const raceNumber = raceMatch ? raceMatch[1] : "1";
 
-      // Extract team scores from the table
+      // Extract team scores and check for matching player name
       const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
       const teamScores = teams.map((team) => {
         const teamName = team.querySelector(".team_name")?.textContent.trim() || "Unknown";
         const teamScore = team.querySelector(".team_score")?.textContent.trim() || "0";
-        return `[${teamName}] ${teamScore}`;
+        const players = Array.from(team.querySelectorAll(".player_name")).map(player =>
+          player.textContent.trim()
+        );
+
+        // Check if any player's name matches the 'name' parameter
+        const isMatch = playerName && players.some(player => player.toLowerCase() === playerName.toLowerCase());
+        const formattedTeam = isMatch
+          ? `<u>[${teamName}] ${teamScore}</u>` // Underline matching team
+          : `[${teamName}] ${teamScore}`;
+        return formattedTeam;
       });
 
       // Format the output
@@ -64,7 +76,7 @@
      */
     function renderFormattedData(formattedData) {
       const tableContainer = document.getElementById("table-container");
-      tableContainer.textContent = formattedData;
+      tableContainer.innerHTML = formattedData; // Use innerHTML to support underlining
     }
   </script>
   <style>
@@ -79,6 +91,9 @@
       left: 10px;
       font-size: 18px;
       font-weight: bold;
+    }
+    u {
+      text-decoration: underline;
     }
   </style>
 </head>
