@@ -7,9 +7,19 @@
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       try {
-        // Get the current 'tableid' from the URL of 'index.html' for reference
-        const indexUrlParams = new URLSearchParams(window.location.search);
-        const currentTableId = indexUrlParams.get("tableid") || "";
+        // Get the 'name' and 'tableid' query parameters from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const name = urlParams.get("name");
+        const currentTableId = urlParams.get("tableid") || "";
+
+        // Ensure the 'name' parameter is present
+        if (!name) {
+          document.body.innerHTML = "<h1>Error</h1><p>The config page cannot be used without a valid 'name' parameter in the URL.</p>";
+          return;
+        }
+
+        // Display the current 'name' and allow modifications to the 'tableid'
+        document.getElementById("name-display").innerText = `Configuring settings for: ${name}`;
 
         // Pre-fill the input field with the current 'tableid'
         const tableIdInput = document.getElementById("tableid-input");
@@ -21,21 +31,15 @@
 
           // Validate the new 'tableid'
           if (!newTableId) {
-            document.getElementById("status-message").innerText = 
-              "Error: Table ID cannot be empty!";
+            document.getElementById("status-message").innerText = "Error: Table ID cannot be empty!";
             document.getElementById("status-message").style.color = "red";
             return;
           }
 
-          // Update the URL for 'index.html' with the new 'tableid'
-          let newUrl = `index.html?tableid=${encodeURIComponent(newTableId)}`;
-          const name = indexUrlParams.get("name");
-          if (name) {
-            newUrl += `&name=${encodeURIComponent(name)}`; // Preserve the 'name' if it exists
-          }
+          // Update the URL for 'index.html' with the new 'tableid' and matching 'name'
+          const newUrl = `index.html?tableid=${encodeURIComponent(newTableId)}&name=${encodeURIComponent(name)}`;
 
-          document.getElementById("status-message").innerText = 
-            "Configuration saved! Redirecting...";
+          document.getElementById("status-message").innerText = "Configuration saved! Redirecting...";
           document.getElementById("status-message").style.color = "green";
 
           // Redirect to the updated index page URL
@@ -45,16 +49,14 @@
         });
       } catch (error) {
         console.error("Error:", error);
-        document.getElementById("status-message").innerText = 
-          "An unexpected error occurred. Please try again later.";
-        document.getElementById("status-message").style.color = "red";
+        document.body.innerHTML = "<h1>Error</h1><p>An unexpected error occurred. Please try again later.</p>";
       }
     });
   </script>
 </head>
 <body>
   <h1>Config Page</h1>
-  <p>Update the table ID for the index page:</p>
+  <p id="name-display"></p>
   <label for="tableid-input">Table ID:</label>
   <input type="text" id="tableid-input" placeholder="Enter table ID" />
   <button id="save-btn">Save Changes</button>
