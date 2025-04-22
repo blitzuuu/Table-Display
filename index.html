@@ -11,23 +11,16 @@
         const urlParams = new URLSearchParams(window.location.search);
         const tableId = urlParams.get("tableid");
 
-        // Display a friendly message if 'tableid' is missing
-        if (!tableId) {
-          document.getElementById("table-container").innerHTML = 
-            "<p style='color: red;'>Error: Missing 'tableid' parameter in the URL. Please provide a valid table ID.</p>";
-          return;
-        }
+        // If 'tableid' is missing, silently stop execution
+        if (!tableId) return;
 
         // Get the 'name' query parameter from the URL (optional)
         const name = urlParams.get("name");
 
         // Fetch the table using the 'tableid'
         const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`);
-        if (!tableResponse.ok) {
-          document.getElementById("table-container").innerHTML = 
-            "<p style='color: red;'>Error: Failed to fetch the table data. Please check the 'tableid' and try again.</p>";
-          return;
-        }
+        if (!tableResponse.ok) return;
+
         const tableHTML = await tableResponse.text();
 
         // Display the fetched table
@@ -38,9 +31,8 @@
           document.getElementById("welcome-message").innerText = `Welcome, ${name}!`;
         }
       } catch (error) {
-        console.error("Error:", error);
-        document.getElementById("table-container").innerHTML = 
-          "<p style='color: red;'>An unexpected error occurred. Please try again later.</p>";
+        // Silently handle errors (do nothing)
+        console.error(error); // Only logged to the console for debugging
       }
     });
   </script>
@@ -62,6 +54,6 @@
 <body>
   <h1>Index Page</h1>
   <p id="welcome-message"></p>
-  <div id="table-container">Loading table...</div>
+  <div id="table-container"></div>
 </body>
 </html>
