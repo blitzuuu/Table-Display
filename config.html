@@ -6,34 +6,49 @@
   <title>Config Page</title>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // Get the current 'tableid' from the URL of 'index.html' for reference
-      const indexUrlParams = new URLSearchParams(window.location.search);
-      const currentTableId = indexUrlParams.get("tableid") || "";
+      try {
+        // Get the current 'tableid' from the URL of 'index.html' for reference
+        const indexUrlParams = new URLSearchParams(window.location.search);
+        const currentTableId = indexUrlParams.get("tableid") || "";
 
-      // Pre-fill the input field with the current 'tableid'
-      const tableIdInput = document.getElementById("tableid-input");
-      tableIdInput.value = currentTableId;
+        // Pre-fill the input field with the current 'tableid'
+        const tableIdInput = document.getElementById("tableid-input");
+        tableIdInput.value = currentTableId;
 
-      // Save button functionality
-      document.getElementById("save-btn").addEventListener("click", () => {
-        const newTableId = tableIdInput.value.trim();
+        // Save button functionality
+        document.getElementById("save-btn").addEventListener("click", () => {
+          const newTableId = tableIdInput.value.trim();
 
-        // Validate the new 'tableid'
-        if (!newTableId) {
-          alert("Table ID cannot be empty!");
-          return;
-        }
+          // Validate the new 'tableid'
+          if (!newTableId) {
+            document.getElementById("status-message").innerText = 
+              "Error: Table ID cannot be empty!";
+            document.getElementById("status-message").style.color = "red";
+            return;
+          }
 
-        // Update the URL for 'index.html' with the new 'tableid'
-        const newUrl = `index.html?tableid=${encodeURIComponent(newTableId)}`;
-        const name = indexUrlParams.get("name");
-        if (name) {
-          newUrl += `&name=${encodeURIComponent(name)}`; // Preserve the 'name' if it exists
-        }
+          // Update the URL for 'index.html' with the new 'tableid'
+          let newUrl = `index.html?tableid=${encodeURIComponent(newTableId)}`;
+          const name = indexUrlParams.get("name");
+          if (name) {
+            newUrl += `&name=${encodeURIComponent(name)}`; // Preserve the 'name' if it exists
+          }
 
-        alert(`Configuration saved! New URL for index page: ${newUrl}`);
-        window.location.href = newUrl; // Redirect to the updated index page URL
-      });
+          document.getElementById("status-message").innerText = 
+            "Configuration saved! Redirecting...";
+          document.getElementById("status-message").style.color = "green";
+
+          // Redirect to the updated index page URL
+          setTimeout(() => {
+            window.location.href = newUrl;
+          }, 1500);
+        });
+      } catch (error) {
+        console.error("Error:", error);
+        document.getElementById("status-message").innerText = 
+          "An unexpected error occurred. Please try again later.";
+        document.getElementById("status-message").style.color = "red";
+      }
     });
   </script>
 </head>
@@ -43,5 +58,6 @@
   <label for="tableid-input">Table ID:</label>
   <input type="text" id="tableid-input" placeholder="Enter table ID" />
   <button id="save-btn">Save Changes</button>
+  <p id="status-message"></p>
 </body>
 </html>
