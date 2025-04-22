@@ -1,105 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scores</title>
-  <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      try {
-        // Get the 'tableid' and 'name' query parameters from the URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const tableId = urlParams.get("tableid");
-        const playerName = urlParams.get("name");
-
-        // If 'tableid' is missing, silently stop execution
-        if (!tableId) return;
-
-        // Fetch the table data using the 'tableid'
-        const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`);
-        if (!tableResponse.ok) return;
-
-        const tableHTML = await tableResponse.text();
-
-        // Parse and format the table data
-        const formattedData = parseAndFormatTableData(tableHTML, playerName);
-
-        // Render the formatted data
-        renderFormattedData(formattedData);
-      } catch (error) {
-        // Silently handle errors (do nothing)
-        console.error(error); // Only logged to the console for debugging
-      }
-    });
-
-    /**
-     * Parses the raw table HTML and formats the data.
-     * If a player's name matches the 'name' parameter, underline their team's tag and score.
-     * @param {string} rawHTML - The raw HTML of the table.
-     * @param {string|null} playerName - The name to check for.
-     * @returns {string} Formatted data string with underlined matching teams.
-     */
-    function parseAndFormatTableData(rawHTML, playerName) {
-      // Create a temporary element to parse HTML
-      const tempElement = document.createElement("div");
-      tempElement.innerHTML = rawHTML;
-
-      // Extract the race count (e.g., "12 races") from the header
-      const raceInfo = tempElement.querySelector(".races_played")?.textContent || "";
-      const raceMatch = raceInfo.match(/(\d+)\s*races?/i);
-      const raceNumber = raceMatch ? raceMatch[1] : "1";
-
-      // Extract team scores and check for matching player name
-      const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
-      const teamScores = teams.map((team) => {
-        const teamName = team.querySelector(".team_name")?.textContent.trim() || "Unknown";
-        const teamScore = team.querySelector(".team_score")?.textContent.trim() || "0";
-        const players = Array.from(team.querySelectorAll(".player_name")).map(player =>
-          player.textContent.trim()
-        );
-
-        // Check if any player's name matches the 'name' parameter
-        const isMatch = playerName && players.some(player => player.toLowerCase() === playerName.toLowerCase());
-        const formattedTeam = isMatch
-          ? `<u>[${teamName}] ${teamScore}</u>` // Underline matching team
-          : `[${teamName}] ${teamScore}`;
-        return formattedTeam;
-      });
-
-      // Format the output
-      return `R${raceNumber} | ${teamScores.join(" | ")}`;
-    }
-
-    /**
-     * Renders the formatted data into the page.
-     * @param {string} formattedData - The formatted data string.
-     */
-    function renderFormattedData(formattedData) {
-      const tableContainer = document.getElementById("table-container");
-      tableContainer.innerHTML = formattedData; // Use innerHTML to support underlining
-    }
-  </script>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: transparent;
-      font-family: 'Roboto Mono', monospace;
-    }
-    #table-container {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: black;
-      font-size: 30px; /* Base font size */
-      font-weight: 500;
-    }
-    u {
-      text-decoration: underline;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lounge Rating</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            font-family: 'Roboto Mono', monospace;
+        }
+        #player-stats {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: black;
+            font-size: 30px; /* Base font size */
+            font-weight: 500;
+        }
+        u {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-  <div id="table-container"></div>
+    <div id="player-stats">Loading...</div>
+
+    <script>
+        async function fetchAndRenderData() {
+            try {
+                // Get the 'tableid' and 'name' query parameters from the URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const tableId = urlParams.get("tableid");
+                const playerName = urlParams.get("name");
+
+                // If 'tableid' is missing, silently stop execution
+                if (!tableId) return;
+
+                // Fetch the table data using the 'tableid'
+                const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`);
+                if (!tableResponse.ok) return;
+
+                const tableHTML = await tableResponse.text();
+
+                // Parse and format the table data
+                const formattedData = parseAndFormatTableData(tableHTML, playerName);
+
+                // Render the formatted data
+                renderFormattedData(formattedData);
+            } catch (error) {
+                console.error("Error fetching or rendering data:", error);
+            }
+        }
+
+        /**
+         * Parses the raw table HTML and formats the data.
+         * If a player's name matches the 'name' parameter, underline their team's tag and score.
+         * @param {string} rawHTML - The raw HTML of the table.
+         * @param {string|null} playerName - The name to check for.
+         * @returns {string} Formatted data string with underlined matching teams.
+         */
+        function parseAndFormatTableData(rawHTML, playerName) {
+            // Create a temporary element to parse HTML
+            const tempElement = document.createElement("div");
+            tempElement.innerHTML = rawHTML;
+
+            // Extract the race count (e.g., "12 races") from the header
+            const raceInfo = tempElement.querySelector(".races_played")?.textContent || "";
+            const raceMatch = raceInfo.match(/(\d+)\s*races?/i);
+            const raceNumber = raceMatch ? raceMatch[1] : "1";
+
+            // Extract team scores and check for matching player name
+            const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
+            const teamScores = teams.map((team) => {
+                const teamName = team.querySelector(".team_name")?.textContent.trim() || "Unknown";
+                const teamScore = team.querySelector(".team_score")?.textContent.trim() || "0";
+                const players = Array.from(team.querySelectorAll(".player_name")).map(player =>
+                    player.textContent.trim()
+                );
+
+                // Check if any player's name matches the 'name' parameter
+                const isMatch = playerName && players.some(player => player.toLowerCase() === playerName.toLowerCase());
+                const formattedTeam = isMatch
+                    ? `<u>[${teamName}] ${teamScore}</u>` // Underline matching team
+                    : `[${teamName}] ${teamScore}`;
+                return formattedTeam;
+            });
+
+            // Format the output
+            return `R${raceNumber} | ${teamScores.join(" | ")}`;
+        }
+
+        /**
+         * Renders the formatted data into the page.
+         * @param {string} formattedData - The formatted data string.
+         */
+        function renderFormattedData(formattedData) {
+            const tableContainer = document.getElementById("player-stats");
+            tableContainer.innerHTML = formattedData; // Use innerHTML to support underlining
+        }
+
+        // Automatically fetch and update the data every 5 seconds
+        setInterval(fetchAndRenderData, 5000); // 5,000 ms = 5 seconds
+
+        // Fetch data immediately on page load
+        document.addEventListener("DOMContentLoaded", fetchAndRenderData);
+    </script>
 </body>
 </html>
