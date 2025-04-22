@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Index Page</title>
+  <title>Scores</title>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       try {
@@ -41,18 +41,24 @@
       const tempElement = document.createElement("div");
       tempElement.innerHTML = rawHTML;
 
-      // Extract the relevant data (rows and scores)
-      const rows = Array.from(tempElement.querySelectorAll("tr")); // Assuming scores are in <tr> tags
+      // Extract the race count (e.g., "2 races") from the first paragraph or relevant tag
+      const raceInfo = tempElement.querySelector("p")?.textContent || "";
+      const raceMatch = raceInfo.match(/(\d+)\s*races?/i);
+      const raceNumber = raceMatch ? raceMatch[1] : "1";
+
+      // Extract tag scores from the table rows
+      const rows = Array.from(tempElement.querySelectorAll("tr"));
       const tagScores = [];
 
-      let raceNumber = "1"; // Default to R1
       rows.forEach((row) => {
         const cells = Array.from(row.querySelectorAll("td"));
-        if (cells.length === 5) {
-          // Assuming the tag and score data is in the 5 columns
-          const tag = cells[0].textContent.trim(); // Column 1: Tag
-          const score = cells[3].textContent.trim(); // Column 4: Total Score
-          tagScores.push({ tag, score });
+        if (cells.length >= 4) {
+          // Assuming the tag is in column 1 and the total score is in column 4
+          const tag = cells[0].textContent.trim();
+          const score = cells[3].textContent.trim();
+          if (tag && score) {
+            tagScores.push({ tag, score });
+          }
         }
       });
 
