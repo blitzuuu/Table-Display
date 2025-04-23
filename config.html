@@ -4,59 +4,136 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Config Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f9f9f9;
+    }
+    .config-container {
+      width: 300px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: #ffffff;
+    }
+    .config-container h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .config-container label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .config-container input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+    .config-container button {
+      width: 48%;
+      padding: 10px;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+    }
+    .config-container button.update {
+      background: #007bff;
+      color: #ffffff;
+    }
+    .config-container button.reset {
+      background: #dc3545;
+      color: #ffffff;
+    }
+    .button-group {
+      display: flex;
+      justify-content: space-between;
+    }
+    .status-message {
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: center;
+      visibility: hidden;
+    }
+    .status-message.visible {
+      visibility: visible;
+    }
+  </style>
+</head>
+<body>
+  <div class="config-container">
+    <h1>Config Page</h1>
+    <label for="tableid-input">Table ID</label>
+    <input type="text" id="tableid-input" placeholder="Enter Table ID" />
+    <div class="button-group">
+      <button class="update" id="update-btn">Update</button>
+      <button class="reset" id="reset-btn">Reset</button>
+    </div>
+    <p class="status-message" id="status-message"></p>
+  </div>
+
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      try {
-        // Get the 'name' and 'tableid' query parameters from the URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const name = urlParams.get("name");
-        const currentTableId = urlParams.get("tableid") || "";
+      const urlParams = new URLSearchParams(window.location.search);
+      const name = urlParams.get("name");
+      const currentTableId = urlParams.get("tableid") || "";
 
-        // Ensure the 'name' parameter is present
-        if (!name) {
-          document.body.innerHTML = "<h1>Error</h1><p>The config page cannot be used without a valid 'name' parameter in the URL.</p>";
+      // Ensure the 'name' parameter is valid
+      if (!name) {
+        document.body.innerHTML = "<h1>Error</h1><p>The config page cannot be used without a valid 'name' parameter in the URL.</p>";
+        return;
+      }
+
+      // Pre-fill the table ID input field
+      const tableIdInput = document.getElementById("tableid-input");
+      tableIdInput.value = currentTableId;
+
+      // Update button functionality
+      document.getElementById("update-btn").addEventListener("click", () => {
+        const newTableId = tableIdInput.value.trim();
+        const statusMessage = document.getElementById("status-message");
+
+        // Validate the new table ID
+        if (!newTableId) {
+          statusMessage.textContent = "Error: Table ID cannot be empty!";
+          statusMessage.style.color = "#dc3545"; // Red color
+          statusMessage.classList.add("visible");
           return;
         }
 
-        // Display the current 'name' and allow modifications to the 'tableid'
-        document.getElementById("name-display").innerText = `Configuring settings for: ${name}`;
+        // Broadcast the updated table ID
+        const channel = new BroadcastChannel("table_config_channel");
+        channel.postMessage({ name, tableid: newTableId });
 
-        // Pre-fill the input field with the current 'tableid'
-        const tableIdInput = document.getElementById("tableid-input");
-        tableIdInput.value = currentTableId;
+        // Show success message
+        statusMessage.textContent = "Table ID updated successfully!";
+        statusMessage.style.color = "#007bff"; // Blue color
+        statusMessage.classList.add("visible");
+      });
 
-        // Save button functionality
-        document.getElementById("save-btn").addEventListener("click", () => {
-          const newTableId = tableIdInput.value.trim();
+      // Reset button functionality
+      document.getElementById("reset-btn").addEventListener("click", () => {
+        tableIdInput.value = ""; // Clear the input field
 
-          // Validate the new 'tableid'
-          if (!newTableId) {
-            document.getElementById("status-message").innerText = "Error: Table ID cannot be empty!";
-            document.getElementById("status-message").style.color = "red";
-            return;
-          }
+        // Broadcast a message with an empty table ID
+        const channel = new BroadcastChannel("table_config_channel");
+        channel.postMessage({ name, tableid: "" });
 
-          // Broadcast the updated table ID to any listening pages using BroadcastChannel
-          const channel = new BroadcastChannel("table_config_channel");
-          channel.postMessage({ name, tableid: newTableId });
-
-          // Update the status message
-          document.getElementById("status-message").innerText = "Configuration saved!";
-          document.getElementById("status-message").style.color = "green";
-        });
-      } catch (error) {
-        console.error("Error:", error);
-        document.body.innerHTML = "<h1>Error</h1><p>An unexpected error occurred. Please try again later.</p>";
-      }
+        const statusMessage = document.getElementById("status-message");
+        statusMessage.textContent = "Table ID has been reset.";
+        statusMessage.style.color = "#dc3545"; // Red color
+        statusMessage.classList.add("visible");
+      });
     });
   </script>
-</head>
-<body>
-  <h1>Config Page</h1>
-  <p id="name-display"></p>
-  <label for="tableid-input">Table ID:</label>
-  <input type="text" id="tableid-input" placeholder="Enter table ID" />
-  <button id="save-btn">Save Changes</button>
-  <p id="status-message"></p>
 </body>
 </html>
