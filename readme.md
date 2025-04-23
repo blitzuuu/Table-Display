@@ -6,6 +6,12 @@ For example, a url using my name would look something like this https://blitzuuu
 
 Add this link as a browser source in OBS to display the scores, they update as the table is updated with no need to refresh.
 
+If you would like to change the styling these are the following relevant css elements:
+
+`#table-stats` affects the colour and styling of the race number and dividers
+`.team-normal` affects the colour and styling of all teams apart from the player's team (if the url has a name)
+`.team-highlight` affects the colour and styling of the player's team (if the url has a name)
+
 ## Config Page
 If you would like an OBS dock which can update the table ID without having to edit the link you can use the config page. This page requires a lounge name in the url as such: https://blitzuuu.github.io/Table-Display/config?name=YOUR_LOUNGE_NAME
 
