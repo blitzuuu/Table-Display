@@ -19,11 +19,11 @@
             font-size: 30px; /* Base font size */
             font-weight: 500;
         }
-        .team-highlight {
-            color: white; /* White text for the team with the player */
+        .player-highlight {
+            color: white; /* Highlighted text for the specific player */
         }
-        .team-normal {
-            color: #bebebe; /* Light grey text for other teams */
+        .player-normal {
+            color: #bebebe; /* Light grey text for other players */
         }
     </style>
 </head>
@@ -84,23 +84,47 @@
 
             const format = tempElement.querySelector(".format")?.textContent.trim() || "Unknown";
 
-            const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
-            const teamScores = teams.map((team) => {
-                const teamName = team.querySelector(".team_name")?.textContent.trim() || "Unknown";
-                const teamScore = team.querySelector(".team_score")?.textContent.trim() || "0";
-                const players = Array.from(team.querySelectorAll(".player_name")).map(player =>
-                    player.textContent.trim()
-                );
+            if (format === "FFA") {
+                // Handle FFA format (no teams, individual players' scores)
+                const players = Array.from(tempElement.querySelectorAll(".player_wrapper")).map(player => {
+                    const playerName = player.querySelector(".player_name")?.textContent.trim() || "Unknown";
+                    const playerTotal = parseInt(player.querySelector(".player_total")?.textContent.trim() || "0", 10);
+                    return { name: playerName, total: playerTotal };
+                });
 
-                // Check if any player's name matches the 'name' parameter
-                const isMatch = playerName && players.some(player => player.toLowerCase() === playerName.toLowerCase());
-                const formattedTeam = isMatch
-                    ? `<span class="team-highlight">${formatTag(teamName)} ${teamScore}</span>` // Highlight matching team
-                    : `<span class="team-normal">${formatTag(teamName)} ${teamScore}</span>`; // Normal styling for others
-                return formattedTeam;
-            });
+                // Sort players by their total score (descending order)
+                players.sort((a, b) => b.total - a.total);
 
-            return `R${raceNumber} ${format} | ${teamScores.join(" | ")}`;
+                // Format the output
+                const playerScores = players.map(player => {
+                    const isMatch = playerName && player.name.toLowerCase() === playerName.toLowerCase();
+                    const formattedScore = isMatch
+                        ? `<span class="player-highlight">${formatTag(player.name)} ${player.total}</span>`
+                        : `<span class="player-normal">${formatTag(player.name)} ${player.total}</span>`;
+                    return formattedScore;
+                });
+
+                return `R${raceNumber} ${format} | ${playerScores.join(", ")}`;
+            } else {
+                // Handle other formats (teams)
+                const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
+                const teamScores = teams.map((team) => {
+                    const teamName = team.querySelector(".team_name")?.textContent.trim() || "Unknown";
+                    const teamScore = team.querySelector(".team_score")?.textContent.trim() || "0";
+                    const players = Array.from(team.querySelectorAll(".player_name")).map(player =>
+                        player.textContent.trim()
+                    );
+
+                    // Check if any player's name matches the 'name' parameter
+                    const isMatch = playerName && players.some(player => player.toLowerCase() === playerName.toLowerCase());
+                    const formattedTeam = isMatch
+                        ? `<span class="player-highlight">${formatTag(teamName)} ${teamScore}</span>` // Highlight matching team
+                        : `<span class="player-normal">${formatTag(teamName)} ${teamScore}</span>`; // Normal styling for others
+                    return formattedTeam;
+                });
+
+                return `R${raceNumber} ${format} | ${teamScores.join(" | ")}`;
+            }
         }
 
         function renderFormattedData(formattedData) {
