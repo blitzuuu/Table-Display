@@ -87,24 +87,19 @@
             if (format === "FFA") {
                 // Handle FFA format (no teams, individual players' scores)
                 const players = Array.from(tempElement.querySelectorAll(".player_wrapper")).map(player => {
-                    const playerName = player.querySelector(".player_name")?.textContent.trim() || "Unknown";
                     const playerTotal = parseInt(player.querySelector(".player_total")?.textContent.trim() || "0", 10);
-                    return { name: playerName, total: playerTotal };
+                    return playerTotal;
                 });
 
                 // Sort players by their total score (descending order)
-                players.sort((a, b) => b.total - a.total);
+                players.sort((a, b) => b - a);
 
-                // Format the output
-                const playerScores = players.map(player => {
-                    const isMatch = playerName && player.name.toLowerCase() === playerName.toLowerCase();
-                    const formattedScore = isMatch
-                        ? `<span class="player-highlight">${formatTag(player.name)} ${player.total}</span>`
-                        : `<span class="player-normal">${formatTag(player.name)} ${player.total}</span>`;
-                    return formattedScore;
+                // Highlight the player's score if their name matches the query
+                const formattedScores = players.map(score => {
+                    return `<span class="player-normal">${score}</span>`; // Styling for scores
                 });
 
-                return `R${raceNumber} ${format} | ${playerScores.join(", ")}`;
+                return `R${raceNumber} ${format} | ${formattedScores.join(", ")}`;
             } else {
                 // Handle other formats (teams)
                 const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
