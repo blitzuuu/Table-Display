@@ -24,12 +24,7 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: #3c404d; /* Lighter gray for container */
       border-radius: 5px; /* Rounded corners */
-    }
-    .config-container h1 {
-      font-size: 20px;
-      margin-bottom: 15px;
-      text-align: center;
-      color: white;
+      position: relative;
     }
     .config-container label {
       display: block;
@@ -45,6 +40,8 @@
       border-radius: 5px;
       background-color: #d3d3d3; /* Lighter grey for input */
       color: #000; /* Black text for better contrast */
+      height: 35px; /* Same height as the buttons */
+      margin-left: 10px; /* Aligns with the left edge of buttons */
     }
     .config-container input:focus {
       outline: none;
@@ -74,20 +71,17 @@
     }
     .status-message {
       position: absolute;
-      top: 20px;
+      top: 0;
       left: 50%;
       transform: translateX(-50%);
       padding: 10px 20px;
       font-size: 14px;
       color: white;
       border-radius: 5px;
-      display: none;
+      background-color: transparent;
       opacity: 0; /* Initially hidden and transparent */
-      transition: opacity 0.3s ease-in-out;
-    }
-    .status-message.visible {
-      display: block;
-      opacity: 1;
+      visibility: hidden;
+      transition: opacity 1s ease-in-out; /* Fade-in and fade-out animation */
     }
     .status-message.update {
       background-color: #28a745; /* Green for update */
@@ -95,11 +89,15 @@
     .status-message.reset {
       background-color: #dc3545; /* Red for reset */
     }
+    .status-message.visible {
+      opacity: 1;
+      visibility: visible;
+    }
   </style>
 </head>
 <body>
   <div class="config-container">
-    <h1>Config Page</h1>
+    <div id="status-message" class="status-message"></div>
     <label for="tableid-input">Table ID</label>
     <input type="text" id="tableid-input" placeholder="Enter Table ID" />
     <div class="button-group">
@@ -107,7 +105,6 @@
       <button class="reset" id="reset-btn">Reset</button>
     </div>
   </div>
-  <div id="status-message" class="status-message"></div>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
