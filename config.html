@@ -12,19 +12,40 @@
       font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 0;
+      background-color: #3c404d; /* Full page background color */
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background-color: #18181b; /* Dark background */
     }
     .config-container {
       width: 300px;
       padding: 20px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      background: #3c404d; /* Lighter gray for container */
-      border-radius: 5px; /* Rounded corners */
       position: relative;
+    }
+    .status-message {
+      position: absolute;
+      top: -45px; /* Slightly above the input container */
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 14px;
+      color: white;
+      border-radius: 5px;
+      background-color: transparent;
+      opacity: 0; /* Initially hidden and transparent */
+      visibility: hidden;
+      transition: opacity 1s ease-in-out; /* Fade-in and fade-out animation */
+    }
+    .status-message.update {
+      background-color: #28a745; /* Green for update */
+    }
+    .status-message.reset {
+      background-color: #dc3545; /* Red for reset */
+    }
+    .status-message.visible {
+      opacity: 1;
+      visibility: visible;
     }
     .config-container label {
       display: block;
@@ -66,30 +87,6 @@
     .button-group {
       display: flex;
       justify-content: space-between;
-    }
-    .status-message {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 20px;
-      font-size: 14px;
-      color: white;
-      border-radius: 5px;
-      background-color: transparent;
-      opacity: 0; /* Initially hidden and transparent */
-      visibility: hidden;
-      transition: opacity 1s ease-in-out; /* Fade-in and fade-out animation */
-    }
-    .status-message.update {
-      background-color: #28a745; /* Green for update */
-    }
-    .status-message.reset {
-      background-color: #dc3545; /* Red for reset */
-    }
-    .status-message.visible {
-      opacity: 1;
-      visibility: visible;
     }
   </style>
 </head>
