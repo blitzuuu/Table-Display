@@ -6,7 +6,7 @@ For example, a url using my name would look something like this https://blitzuuu
 
 Add this link as a browser source in OBS to display the scores, they update as the table is updated with no need to refresh.
 
-If you would like to change the styling these are the following relevant css elements:
+If you would like to change the text colour from black to white add "&white" to the end of the url, if you would like to alter the styling further these are the following relevant css elements:
 
 `#table-stats` affects the colour and styling of the race number and dividers
 `.team-normal` affects the colour and styling of all teams apart from the player's team (if the url has a name)
