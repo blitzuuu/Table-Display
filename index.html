@@ -15,15 +15,22 @@
             position: absolute;
             top: 10px;
             left: 10px;
-            color: #bebebe;
             font-size: 30px; /* Base font size */
             font-weight: 500;
         }
+        /* Default styling for text (dark grey text, black highlight) */
         .player-highlight {
-            color: white; /* Highlighted text for the specific player's score */
+            color: black; /* Highlighted text for the specific player's score */
         }
         .player-normal {
-            color: #bebebe; /* Light grey text for other players' scores */
+            color: #444444; /* Dark grey text for other players' scores */
+        }
+        /* Styling for &white parameter (light grey text, white highlight) */
+        .white-mode .player-highlight {
+            color: white;
+        }
+        .white-mode .player-normal {
+            color: #bebebe;
         }
     </style>
 </head>
@@ -45,6 +52,13 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const tableId = urlParams.get("tableid");
                 const playerName = urlParams.get("name");
+
+                // Apply styling mode based on the presence of the &white parameter
+                if (urlParams.has("white")) {
+                    document.body.classList.add("white-mode");
+                } else {
+                    document.body.classList.remove("white-mode");
+                }
 
                 // If 'tableid' is missing, clear the display and stop execution
                 if (!tableId) {
