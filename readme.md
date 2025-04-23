@@ -16,3 +16,12 @@ If you would like to change the styling these are the following relevant css ele
 If you would like an OBS dock which can update the table ID without having to edit the link you can use the config page. This page requires a lounge name in the url as such: https://blitzuuu.github.io/Table-Display/config?name=YOUR_LOUNGE_NAME
 
 Add this as a custom browser dock in OBS, and then add the index url with no table ID (e.g., https://blitzuuu.github.io/Table-Display/index?YOUR_LOUNGE_NAME). Make sure the name in both urls is the same. Now you can just insert a table ID and click the update button and it will update the link to display the table, to wipe it clear just click the reset button.
+
+### Output
+This is what the output looks like (*Note: I also have a semi-transparent black colour source behind my text in OBS to make it more readable*)
+
+![Example Image](images/example.png)
+
+As well as the OBS dock
+
+![Config Image](images/config.png)

@@ -31,6 +31,15 @@
     <div id="table-stats"></div>
 
     <script>
+        // Function to format tags and avoid double brackets
+        function formatTag(tag) {
+            // Check if the tag already starts and ends with square brackets
+            if (tag.startsWith('[') && tag.endsWith(']')) {
+                return tag; // Return as-is if already formatted
+            }
+            return `[${tag}]`; // Otherwise, wrap it in square brackets
+        }
+
         async function fetchAndRenderData() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -84,8 +93,8 @@
                 // Check if any player's name matches the 'name' parameter
                 const isMatch = playerName && players.some(player => player.toLowerCase() === playerName.toLowerCase());
                 const formattedTeam = isMatch
-                    ? `<span class="team-highlight">[${teamName}] ${teamScore}</span>` // Highlight matching team
-                    : `<span class="team-normal">[${teamName}] ${teamScore}</span>`; // Normal styling for others
+                    ? `<span class="team-highlight">${formatTag(teamName)} ${teamScore}</span>` // Highlight matching team
+                    : `<span class="team-normal">${formatTag(teamName)} ${teamScore}</span>`; // Normal styling for others
                 return formattedTeam;
             });
 
