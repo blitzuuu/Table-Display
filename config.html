@@ -16,7 +16,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background-color: #18181b; /* Dark background color */
+      background-color: #18181b; /* Dark background */
     }
     .config-container {
       width: 300px;
@@ -59,10 +59,10 @@
       color: white;
     }
     .config-container button.update {
-      background-color: #007bff; /* Bright blue */
+      background-color: #28a745; /* Green for update */
     }
     .config-container button.reset {
-      background-color: #dc3545; /* Bright red */
+      background-color: #dc3545; /* Red for reset */
     }
     .config-container button:hover {
       opacity: 0.9; /* Slight fade on hover */
@@ -72,14 +72,27 @@
       justify-content: space-between;
     }
     .status-message {
-      font-size: 12px;
-      margin-top: 10px;
-      text-align: center;
-      visibility: hidden;
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 14px;
       color: white;
+      border-radius: 5px;
+      display: none;
+      opacity: 0; /* Initially hidden and transparent */
+      transition: opacity 0.3s ease-in-out;
     }
     .status-message.visible {
-      visibility: visible;
+      display: block;
+      opacity: 1;
+    }
+    .status-message.update {
+      background-color: #28a745; /* Green for update */
+    }
+    .status-message.reset {
+      background-color: #dc3545; /* Red for reset */
     }
   </style>
 </head>
@@ -92,8 +105,8 @@
       <button class="update" id="update-btn">Update</button>
       <button class="reset" id="reset-btn">Reset</button>
     </div>
-    <p class="status-message" id="status-message"></p>
   </div>
+  <div id="status-message" class="status-message"></div>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -111,16 +124,26 @@
       const tableIdInput = document.getElementById("tableid-input");
       tableIdInput.value = currentTableId;
 
+      const statusMessage = document.getElementById("status-message");
+
+      // Function to display the status message
+      function showStatusMessage(type, text) {
+        statusMessage.className = `status-message ${type} visible`;
+        statusMessage.textContent = text;
+
+        // Fade out after 7 seconds
+        setTimeout(() => {
+          statusMessage.classList.remove("visible");
+        }, 7000);
+      }
+
       // Update button functionality
       document.getElementById("update-btn").addEventListener("click", () => {
         const newTableId = tableIdInput.value.trim();
-        const statusMessage = document.getElementById("status-message");
 
         // Validate the new table ID
         if (!newTableId) {
-          statusMessage.textContent = "Error: Table ID cannot be empty!";
-          statusMessage.style.color = "#dc3545"; // Red color
-          statusMessage.classList.add("visible");
+          showStatusMessage("reset", "Error: Table ID cannot be empty!");
           return;
         }
 
@@ -129,9 +152,7 @@
         channel.postMessage({ name, tableid: newTableId });
 
         // Show success message
-        statusMessage.textContent = "Table ID updated successfully!";
-        statusMessage.style.color = "#007bff"; // Blue color
-        statusMessage.classList.add("visible");
+        showStatusMessage("update", "Updated");
       });
 
       // Reset button functionality
@@ -142,10 +163,8 @@
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: "" });
 
-        const statusMessage = document.getElementById("status-message");
-        statusMessage.textContent = "Table ID has been reset.";
-        statusMessage.style.color = "#dc3545"; // Red color
-        statusMessage.classList.add("visible");
+        // Show reset message
+        showStatusMessage("reset", "Reset");
       });
     });
   </script>
