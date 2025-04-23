@@ -82,6 +82,8 @@
             const raceMatch = raceInfo.match(/(\d+)\s*races?/i);
             const raceNumber = raceMatch ? raceMatch[1] : "1";
 
+            const format = tempElement.querySelector(".format")?.textContent.trim() || "Unknown";
+
             const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
             const teamScores = teams.map((team) => {
                 const teamName = team.querySelector(".team_name")?.textContent.trim() || "Unknown";
@@ -98,7 +100,7 @@
                 return formattedTeam;
             });
 
-            return `R${raceNumber} | ${teamScores.join(" | ")}`;
+            return `R${raceNumber} ${format} | ${teamScores.join(" | ")}`;
         }
 
         function renderFormattedData(formattedData) {
