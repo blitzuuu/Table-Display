@@ -20,10 +20,10 @@
             font-weight: 500;
         }
         .player-highlight {
-            color: white; /* Highlighted text for the specific player */
+            color: white; /* Highlighted text for the specific player's score */
         }
         .player-normal {
-            color: #bebebe; /* Light grey text for other players */
+            color: #bebebe; /* Light grey text for other players' scores */
         }
     </style>
 </head>
@@ -87,19 +87,24 @@
             if (format === "FFA") {
                 // Handle FFA format (no teams, individual players' scores)
                 const players = Array.from(tempElement.querySelectorAll(".player_wrapper")).map(player => {
+                    const playerName = player.querySelector(".player_name")?.textContent.trim() || "Unknown";
                     const playerTotal = parseInt(player.querySelector(".player_total")?.textContent.trim() || "0", 10);
-                    return playerTotal;
+                    return { name: playerName, total: playerTotal };
                 });
 
                 // Sort players by their total score (descending order)
-                players.sort((a, b) => b - a);
+                players.sort((a, b) => b.total - a.total);
 
-                // Highlight the player's score if their name matches the query
-                const formattedScores = players.map(score => {
-                    return `<span class="player-normal">${score}</span>`; // Styling for scores
+                // Format the output
+                const playerScores = players.map(player => {
+                    const isMatch = playerName && player.name.toLowerCase() === playerName.toLowerCase();
+                    const formattedScore = isMatch
+                        ? `<span class="player-highlight">${player.total}</span>`
+                        : `<span class="player-normal">${player.total}</span>`;
+                    return formattedScore;
                 });
 
-                return `R${raceNumber} ${format} | ${formattedScores.join(", ")}`;
+                return `R${raceNumber} ${format} | ${playerScores.join(", ")}`;
             } else {
                 // Handle other formats (teams)
                 const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
