@@ -19,7 +19,7 @@
             font-size: 30px; /* Base font size */
             font-weight: 500;
         }
-        u {
+        i {
             font-style: italic;
         }
     </style>
@@ -56,10 +56,10 @@
 
         /**
          * Parses the raw table HTML and formats the data.
-         * If a player's name matches the 'name' parameter, underline their team's tag and score.
+         * If a player's name matches the 'name' parameter, italicize their team's tag and score.
          * @param {string} rawHTML - The raw HTML of the table.
          * @param {string|null} playerName - The name to check for.
-         * @returns {string} Formatted data string with underlined matching teams.
+         * @returns {string} Formatted data string with italicized matching teams.
          */
         function parseAndFormatTableData(rawHTML, playerName) {
             // Create a temporary element to parse HTML
@@ -83,7 +83,7 @@
                 // Check if any player's name matches the 'name' parameter
                 const isMatch = playerName && players.some(player => player.toLowerCase() === playerName.toLowerCase());
                 const formattedTeam = isMatch
-                    ? `<u>[${teamName}] ${teamScore}</u>` // Underline matching team
+                    ? `<i>[${teamName}] ${teamScore}</i>` // Italicize matching team
                     : `[${teamName}] ${teamScore}`;
                 return formattedTeam;
             });
@@ -98,7 +98,7 @@
          */
         function renderFormattedData(formattedData) {
             const tableContainer = document.getElementById("player-stats");
-            tableContainer.innerHTML = formattedData; // Use innerHTML to support underlining
+            tableContainer.innerHTML = formattedData; // Use innerHTML to support italics
         }
 
         // Automatically fetch and update the data every 5 seconds
