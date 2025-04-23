@@ -11,7 +11,7 @@
             background-color: transparent;
             font-family: 'Roboto Mono', monospace;
         }
-        #player-stats {
+        #table-stats {
             position: absolute;
             top: 10px;
             left: 10px;
@@ -19,13 +19,16 @@
             font-size: 30px; /* Base font size */
             font-weight: 500;
         }
-        i {
-            font-style: italic;
+        .team-highlight {
+            color: black; /* Black text for the team with the player */
+        }
+        .team-normal {
+            color: #555; /* Dark grey text for other teams */
         }
     </style>
 </head>
 <body>
-    <div id="player-stats"></div>
+    <div id="table-stats"></div>
 
     <script>
         async function fetchAndRenderData() {
@@ -36,7 +39,7 @@
 
                 // If 'tableid' is missing, clear the display and stop execution
                 if (!tableId) {
-                    document.getElementById("player-stats").innerHTML = ""; // Clear display
+                    document.getElementById("table-stats").innerHTML = ""; // Clear display
                     return;
                 }
 
@@ -44,7 +47,7 @@
                 const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`);
                 if (!tableResponse.ok) {
                     // If response is invalid, clear the display
-                    document.getElementById("player-stats").innerHTML = "";
+                    document.getElementById("table-stats").innerHTML = "";
                     return;
                 }
 
@@ -58,7 +61,7 @@
             } catch (error) {
                 console.error("Error fetching or rendering data:", error);
                 // Clear the display in case of an error
-                document.getElementById("player-stats").innerHTML = "";
+                document.getElementById("table-stats").innerHTML = "";
             }
         }
 
@@ -81,8 +84,8 @@
                 // Check if any player's name matches the 'name' parameter
                 const isMatch = playerName && players.some(player => player.toLowerCase() === playerName.toLowerCase());
                 const formattedTeam = isMatch
-                    ? `<i>[${teamName}] ${teamScore}</i>` // Italicize matching team
-                    : `[${teamName}] ${teamScore}`;
+                    ? `<span class="team-highlight">[${teamName}] ${teamScore}</span>` // Highlight matching team
+                    : `<span class="team-normal">[${teamName}] ${teamScore}</span>`; // Normal styling for others
                 return formattedTeam;
             });
 
@@ -90,7 +93,7 @@
         }
 
         function renderFormattedData(formattedData) {
-            const tableContainer = document.getElementById("player-stats");
+            const tableContainer = document.getElementById("table-stats");
             tableContainer.innerHTML = formattedData;
         }
 
@@ -118,7 +121,7 @@
                     fetchAndRenderData();
                 } else {
                     // Clear the displayed data if tableid is removed
-                    document.getElementById("player-stats").innerHTML = "";
+                    document.getElementById("table-stats").innerHTML = "";
                 }
             }
         });
