@@ -19,18 +19,18 @@
             font-weight: 500;
         }
         /* Default styling for text (dark grey text, black highlight) */
-        .player-highlight {
-            color: black; /* Highlighted text for the specific player's score */
+        .dark-mode .text-highlight {
+            color: black; /* Highlighted text (e.g., player's score) */
         }
-        .player-normal {
-            color: #444444; /* Dark grey text for other players' scores */
+        .dark-mode .text-normal {
+            color: #444444; /* Dark grey text for other elements */
         }
         /* Styling for &white parameter (light grey text, white highlight) */
-        .white-mode .player-highlight {
-            color: white;
+        .white-mode .text-highlight {
+            color: white; /* Highlighted text (e.g., player's score) */
         }
-        .white-mode .player-normal {
-            color: #bebebe;
+        .white-mode .text-normal {
+            color: #bebebe; /* Light grey text for other elements */
         }
     </style>
 </head>
@@ -56,7 +56,9 @@
                 // Apply styling mode based on the presence of the &white parameter
                 if (urlParams.has("white")) {
                     document.body.classList.add("white-mode");
+                    document.body.classList.remove("dark-mode");
                 } else {
+                    document.body.classList.add("dark-mode");
                     document.body.classList.remove("white-mode");
                 }
 
@@ -113,12 +115,12 @@
                 const playerScores = players.map(player => {
                     const isMatch = playerName && player.name.toLowerCase() === playerName.toLowerCase();
                     const formattedScore = isMatch
-                        ? `<span class="player-highlight">${player.total}</span>`
-                        : `<span class="player-normal">${player.total}</span>`;
+                        ? `<span class="text-highlight">${player.total}</span>`
+                        : `<span class="text-normal">${player.total}</span>`;
                     return formattedScore;
                 });
 
-                return `R${raceNumber} ${format} | ${playerScores.join(", ")}`;
+                return `<span class="text-normal">R${raceNumber} ${format}</span> | ${playerScores.join('<span class="text-normal">, </span>')}`;
             } else {
                 // Handle other formats (teams)
                 const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
@@ -132,12 +134,12 @@
                     // Check if any player's name matches the 'name' parameter
                     const isMatch = playerName && players.some(player => player.toLowerCase() === playerName.toLowerCase());
                     const formattedTeam = isMatch
-                        ? `<span class="player-highlight">${formatTag(teamName)} ${teamScore}</span>` // Highlight matching team
-                        : `<span class="player-normal">${formatTag(teamName)} ${teamScore}</span>`; // Normal styling for others
+                        ? `<span class="text-highlight">${formatTag(teamName)} ${teamScore}</span>` // Highlight matching team
+                        : `<span class="text-normal">${formatTag(teamName)} ${teamScore}</span>`; // Normal styling for others
                     return formattedTeam;
                 });
 
-                return `R${raceNumber} ${format} | ${teamScores.join(" | ")}`;
+                return `<span class="text-normal">R${raceNumber} ${format}</span> | ${teamScores.join('<span class="text-normal"> | </span>')}`;
             }
         }
 
