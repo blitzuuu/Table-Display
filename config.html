@@ -38,13 +38,15 @@
       color: white;
     }
     .config-container input {
-      width: 100%;
+      width: calc(100% - 20px); /* Matches the alignment of buttons with padding */
       padding: 10px;
       margin-bottom: 15px;
       border: none;
       border-radius: 5px;
-      background-color: #3c404d;
-      color: white;
+      background-color: #d3d3d3; /* Lighter grey for input */
+      color: #000; /* Black text for better contrast */
+      height: 35px; /* Same height as the buttons */
+      margin-left: 10px; /* Aligns with the left edge of buttons */
     }
     .config-container input:focus {
       outline: none;
@@ -57,6 +59,7 @@
       cursor: pointer;
       border-radius: 5px;
       color: white;
+      height: 35px; /* Same height as the input field */
     }
     .config-container button.update {
       background-color: #28a745; /* Green for update */
