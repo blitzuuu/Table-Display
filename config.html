@@ -36,16 +36,13 @@
             return;
           }
 
-          // Update the URL for 'index.html' with the new 'tableid' and matching 'name'
-          const newUrl = `index.html?tableid=${encodeURIComponent(newTableId)}&name=${encodeURIComponent(name)}`;
+          // Broadcast the updated table ID to any listening pages using BroadcastChannel
+          const channel = new BroadcastChannel("table_config_channel");
+          channel.postMessage({ name, tableid: newTableId });
 
-          document.getElementById("status-message").innerText = "Configuration saved! Redirecting...";
+          // Update the status message
+          document.getElementById("status-message").innerText = "Configuration saved!";
           document.getElementById("status-message").style.color = "green";
-
-          // Redirect to the updated index page URL
-          setTimeout(() => {
-            window.location.href = newUrl;
-          }, 1500);
         });
       } catch (error) {
         console.error("Error:", error);
