@@ -120,7 +120,7 @@
                     return formattedScore;
                 });
 
-                return `<span class="text-normal">R${raceNumber} ${format}</span> | ${playerScores.join('<span class="text-normal">, </span>')}`;
+                return `<span class="text-normal">R${raceNumber} ${format}</span> <span class="text-normal">|</span> ${playerScores.join('<span class="text-normal">, </span>')}`;
             } else {
                 // Handle other formats (teams)
                 const teams = Array.from(tempElement.querySelectorAll(".team_wrapper"));
@@ -139,7 +139,7 @@
                     return formattedTeam;
                 });
 
-                return `<span class="text-normal">R${raceNumber} ${format}</span> | ${teamScores.join('<span class="text-normal"> | </span>')}`;
+                return `<span class="text-normal">R${raceNumber} ${format}</span> <span class="text-normal">|</span> ${teamScores.join('<span class="text-normal"> | </span>')}`;
             }
         }
 
