@@ -23,24 +23,6 @@
       padding: 20px;
       position: relative;
     }
-    .status-message {
-      position: absolute;
-      top: -25px; /* Positioned just above the input */
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 14px;
-      color: #28a745; /* Default green for success messages */
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.5s ease-in-out; /* Fade-in and fade-out animation */
-    }
-    .status-message.reset {
-      color: #dc3545; /* Red for reset/error messages */
-    }
-    .status-message.visible {
-      opacity: 1;
-      visibility: visible;
-    }
     .config-container label {
       display: block;
       font-size: 14px;
@@ -87,7 +69,6 @@
 </head>
 <body>
   <div class="config-container">
-    <div id="status-message" class="status-message"></div>
     <label for="tableid-input">Table ID</label>
     <input type="text" id="tableid-input" placeholder="Enter Table ID" />
     <div class="button-group">
@@ -97,14 +78,29 @@
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const name = urlParams.get("name");
       const currentTableId = urlParams.get("tableid") || "";
 
-      // Ensure the 'name' parameter is valid
-      if (!name) {
-        document.body.innerHTML = "<h1>Error</h1><p>The config page cannot be used without a valid 'name' parameter in the URL.</p>";
+      // Function to display an error message and stop further processing
+      function showError(message) {
+        document.body.innerHTML = `<h1>Error</h1><p>${message}</p>`;
+      }
+
+      // Fetch player_data.json to validate names
+      try {
+        const response = await fetch("player_data.json");
+        const playerData = await response.json();
+        const validNames = playerData.map(player => player.name);
+
+        // Validate the 'name' parameter
+        if (!name || !validNames.includes(name)) {
+          showError("The config page cannot be used without a valid 'name' parameter in the URL.");
+          return;
+        }
+      } catch (error) {
+        showError("Error loading player data. Please try again later.");
         return;
       }
 
@@ -112,17 +108,13 @@
       const tableIdInput = document.getElementById("tableid-input");
       tableIdInput.value = currentTableId;
 
-      const statusMessage = document.getElementById("status-message");
-
-      // Function to display the status message
-      function showStatusMessage(type, text) {
-        statusMessage.className = `status-message ${type} visible`;
-        statusMessage.textContent = text;
-
-        // Fade out after 7 seconds
+      // Function to show a bold checkmark on a button
+      function showCheckmark(button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = "<b>✔</b>";
         setTimeout(() => {
-          statusMessage.classList.remove("visible");
-        }, 7000);
+          button.innerHTML = originalText;
+        }, 5000); // Reset after 5 seconds
       }
 
       // Update button functionality
@@ -131,7 +123,7 @@
 
         // Validate the new table ID
         if (!newTableId) {
-          showStatusMessage("reset", "Error: Table ID cannot be empty!");
+          alert("Error: Table ID cannot be empty!");
           return;
         }
 
@@ -139,8 +131,8 @@
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: newTableId });
 
-        // Show success message
-        showStatusMessage("update", "Updated successfully");
+        // Show checkmark on the Update button
+        showCheckmark(document.getElementById("update-btn"));
       });
 
       // Reset button functionality
@@ -151,8 +143,8 @@
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: "" });
 
-        // Show reset message
-        showStatusMessage("reset", "Reset to default");
+        // Show checkmark on the Reset button
+        showCheckmark(document.getElementById("reset-btn"));
       });
     });
   </script>
