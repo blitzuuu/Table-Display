@@ -23,31 +23,11 @@
       padding: 20px;
       position: relative;
     }
-    .label-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .config-container label {
+      display: block;
+      font-size: 14px;
       margin-bottom: 5px;
-    }
-    .label-container label {
-      font-size: 14px;
       color: white;
-    }
-    .status-message {
-      font-size: 14px;
-      text-align: center;
-      flex-grow: 1;
-      color: #28a745; /* Default green for success messages */
-      visibility: hidden;
-      opacity: 0;
-      transition: opacity 0.5s ease-in-out;
-    }
-    .status-message.visible {
-      visibility: visible;
-      opacity: 1;
-    }
-    .status-message.reset {
-      color: #d9534f; /* Red for reset messages */
     }
     .config-container input {
       width: calc(100% - 20px); /* Matches the alignment of buttons with padding */
@@ -89,10 +69,7 @@
 </head>
 <body>
   <div class="config-container">
-    <div class="label-container">
-      <label for="tableid-input">Table ID</label>
-      <div id="status-message" class="status-message"></div>
-    </div>
+    <label for="tableid-input">Table ID</label>
     <input type="text" id="tableid-input" placeholder="Enter Table ID" />
     <div class="button-group">
       <button class="update" id="update-btn">Update</button>
@@ -106,25 +83,21 @@
       const name = urlParams.get("name");
       const currentTableId = urlParams.get("tableid") || "";
 
-      const statusMessage = document.getElementById("status-message");
       const tableIdInput = document.getElementById("tableid-input");
       tableIdInput.value = currentTableId;
 
-      // Function to display a status message
-      function showStatusMessage(message, isReset = false) {
-        statusMessage.textContent = message;
-        statusMessage.className = `status-message visible ${isReset ? "reset" : ""}`;
-
-        // Hide the message after 5 seconds
+      // Function to show a bold checkmark on a button
+      function showCheckmark(button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = "<b>✔</b>";
         setTimeout(() => {
-          statusMessage.classList.remove("visible");
-        }, 5000);
+          button.innerHTML = originalText;
+        }, 3000); // Reset after 3 seconds
       }
 
       // Function to reset the input field
       function resetInput() {
         tableIdInput.value = ""; // Clear the input field
-        showStatusMessage("Reset!", true);
       }
 
       // Fetch player_data.json to validate names
@@ -154,10 +127,10 @@
           // Broadcast the updated table ID
           const channel = new BroadcastChannel("table_config_channel");
           channel.postMessage({ name, tableid: newTableId });
-
-          // Show updated message
-          showStatusMessage("Updated!");
         }
+
+        // Show checkmark on the Update button
+        showCheckmark(document.getElementById("update-btn"));
       });
 
       // Reset button functionality
@@ -167,6 +140,9 @@
         // Broadcast a message with an empty table ID
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: "" });
+
+        // Show checkmark on the Reset button
+        showCheckmark(document.getElementById("reset-btn"));
       });
     });
   </script>
