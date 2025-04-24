@@ -23,6 +23,18 @@
       padding: 20px;
       position: relative;
     }
+    .status-message {
+      font-size: 14px;
+      color: #28a745; /* Default green for success messages */
+      margin-bottom: 5px;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    .status-message.visible {
+      visibility: visible;
+      opacity: 1;
+    }
     .config-container label {
       display: block;
       font-size: 14px;
@@ -69,6 +81,7 @@
 </head>
 <body>
   <div class="config-container">
+    <div id="status-message" class="status-message"></div>
     <label for="tableid-input">Table ID</label>
     <input type="text" id="tableid-input" placeholder="Enter Table ID" />
     <div class="button-group">
@@ -83,9 +96,25 @@
       const name = urlParams.get("name");
       const currentTableId = urlParams.get("tableid") || "";
 
-      // Function to display an error message and stop further processing
-      function showError(message) {
-        document.body.innerHTML = `<h1>Error</h1><p>${message}</p>`;
+      const statusMessage = document.getElementById("status-message");
+      const tableIdInput = document.getElementById("tableid-input");
+      tableIdInput.value = currentTableId;
+
+      // Function to display a status message
+      function showStatusMessage(message) {
+        statusMessage.textContent = message;
+        statusMessage.classList.add("visible");
+
+        // Hide the message after 5 seconds
+        setTimeout(() => {
+          statusMessage.classList.remove("visible");
+        }, 5000);
+      }
+
+      // Function to reset the input field
+      function resetInput() {
+        tableIdInput.value = ""; // Clear the input field
+        showStatusMessage("Reset!");
       }
 
       // Fetch player_data.json to validate names
@@ -96,55 +125,38 @@
 
         // Validate the 'name' parameter
         if (!name || !validNames.includes(name)) {
-          showError("The config page cannot be used without a valid 'name' parameter in the URL.");
+          document.body.innerHTML = `<h1>Error</h1><p>The config page cannot be used without a valid 'name' parameter in the URL.</p>`;
           return;
         }
       } catch (error) {
-        showError("Error loading player data. Please try again later.");
+        document.body.innerHTML = `<h1>Error</h1><p>Error loading player data. Please try again later.</p>`;
         return;
-      }
-
-      // Pre-fill the table ID input field
-      const tableIdInput = document.getElementById("tableid-input");
-      tableIdInput.value = currentTableId;
-
-      // Function to show a bold checkmark on a button
-      function showCheckmark(button) {
-        const originalText = button.innerHTML;
-        button.innerHTML = "<b>✔</b>";
-        setTimeout(() => {
-          button.innerHTML = originalText;
-        }, 5000); // Reset after 5 seconds
       }
 
       // Update button functionality
       document.getElementById("update-btn").addEventListener("click", () => {
         const newTableId = tableIdInput.value.trim();
 
-        // Validate the new table ID
+        // If the input is empty, treat it as a reset
         if (!newTableId) {
-          alert("Error: Table ID cannot be empty!");
-          return;
+          resetInput();
+        } else {
+          // Broadcast the updated table ID
+          const channel = new BroadcastChannel("table_config_channel");
+          channel.postMessage({ name, tableid: newTableId });
+
+          // Show updated message
+          showStatusMessage("Updated!");
         }
-
-        // Broadcast the updated table ID
-        const channel = new BroadcastChannel("table_config_channel");
-        channel.postMessage({ name, tableid: newTableId });
-
-        // Show checkmark on the Update button
-        showCheckmark(document.getElementById("update-btn"));
       });
 
       // Reset button functionality
       document.getElementById("reset-btn").addEventListener("click", () => {
-        tableIdInput.value = ""; // Clear the input field
+        resetInput();
 
         // Broadcast a message with an empty table ID
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: "" });
-
-        // Show checkmark on the Reset button
-        showCheckmark(document.getElementById("reset-btn"));
       });
     });
   </script>
