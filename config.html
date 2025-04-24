@@ -25,23 +25,17 @@
     }
     .status-message {
       position: absolute;
-      top: -45px; /* Slightly above the input container */
+      top: -25px; /* Positioned just above the input */
       left: 50%;
       transform: translateX(-50%);
-      padding: 10px 20px;
       font-size: 14px;
-      color: white;
-      border-radius: 5px;
-      background-color: transparent;
-      opacity: 0; /* Initially hidden and transparent */
+      color: #28a745; /* Default green for success messages */
+      opacity: 0;
       visibility: hidden;
-      transition: opacity 1s ease-in-out; /* Fade-in and fade-out animation */
-    }
-    .status-message.update {
-      background-color: #28a745; /* Green for update */
+      transition: opacity 0.5s ease-in-out; /* Fade-in and fade-out animation */
     }
     .status-message.reset {
-      background-color: #dc3545; /* Red for reset */
+      color: #dc3545; /* Red for reset/error messages */
     }
     .status-message.visible {
       opacity: 1;
@@ -74,15 +68,16 @@
       border-radius: 5px;
       color: white;
       height: 35px; /* Same height as the input field */
+      opacity: 0.9; /* Slightly muted button appearance */
     }
     .config-container button.update {
-      background-color: #28a745; /* Green for update */
+      background-color: #5cb85c; /* Muted green for update */
     }
     .config-container button.reset {
-      background-color: #dc3545; /* Red for reset */
+      background-color: #d9534f; /* Muted red for reset */
     }
     .config-container button:hover {
-      opacity: 0.9; /* Slight fade on hover */
+      opacity: 1.0; /* Full opacity on hover */
     }
     .button-group {
       display: flex;
@@ -145,7 +140,7 @@
         channel.postMessage({ name, tableid: newTableId });
 
         // Show success message
-        showStatusMessage("update", "Updated");
+        showStatusMessage("update", "Updated successfully");
       });
 
       // Reset button functionality
@@ -157,7 +152,7 @@
         channel.postMessage({ name, tableid: "" });
 
         // Show reset message
-        showStatusMessage("reset", "Reset");
+        showStatusMessage("reset", "Reset to default");
       });
     });
   </script>
