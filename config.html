@@ -51,6 +51,8 @@
       color: white;
       height: 35px; /* Same height as the input field */
       opacity: 0.9; /* Slightly muted button appearance */
+      position: relative;
+      overflow: hidden;
     }
     .config-container button.update {
       background-color: #5cb85c; /* Muted green for update */
@@ -65,6 +67,35 @@
       display: flex;
       justify-content: space-between;
     }
+    .checkmark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      visibility: hidden;
+    }
+    .checkmark path {
+      stroke: white;
+      stroke-width: 3;
+      stroke-linecap: round;
+      fill: none;
+      stroke-dasharray: 50;
+      stroke-dashoffset: 50;
+      animation: draw 0.5s ease-in-out forwards, fadeOut 0.5s ease-in-out 3s forwards;
+    }
+    @keyframes draw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
   </style>
 </head>
 <body>
@@ -72,8 +103,18 @@
     <label for="tableid-input">Table ID</label>
     <input type="text" id="tableid-input" placeholder="Enter Table ID" />
     <div class="button-group">
-      <button class="update" id="update-btn">Update</button>
-      <button class="reset" id="reset-btn">Reset</button>
+      <button class="update" id="update-btn">
+        Update
+        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M5 13l4 4L19 7" />
+        </svg>
+      </button>
+      <button class="reset" id="reset-btn">
+        Reset
+        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M5 13l4 4L19 7" />
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -86,13 +127,13 @@
       const tableIdInput = document.getElementById("tableid-input");
       tableIdInput.value = currentTableId;
 
-      // Function to show a bold checkmark on a button
-      function showCheckmark(button) {
-        const originalText = button.innerHTML;
-        button.innerHTML = "<b>✔</b>";
+      // Function to animate the checkmark
+      function animateCheckmark(button) {
+        const checkmark = button.querySelector(".checkmark");
+        checkmark.style.visibility = "visible";
         setTimeout(() => {
-          button.innerHTML = originalText;
-        }, 3000); // Reset after 3 seconds
+          checkmark.style.visibility = "hidden";
+        }, 3000); // Hide the checkmark after 3 seconds
       }
 
       // Function to reset the input field
@@ -129,8 +170,8 @@
           channel.postMessage({ name, tableid: newTableId });
         }
 
-        // Show checkmark on the Update button
-        showCheckmark(document.getElementById("update-btn"));
+        // Animate the checkmark on the Update button
+        animateCheckmark(document.getElementById("update-btn"));
       });
 
       // Reset button functionality
@@ -141,8 +182,8 @@
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: "" });
 
-        // Show checkmark on the Reset button
-        showCheckmark(document.getElementById("reset-btn"));
+        // Animate the checkmark on the Reset button
+        animateCheckmark(document.getElementById("reset-btn"));
       });
     });
   </script>
