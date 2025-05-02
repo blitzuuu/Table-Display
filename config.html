@@ -91,7 +91,7 @@
         const originalText = button.innerHTML;
         button.innerHTML = "<b>✔</b>";
         setTimeout(() => {
-          button.innerHTML = originalText;
+          button.innerHTML = originalText; // Reset back to the original text
         }, 3000); // Reset after 3 seconds
       }
 
