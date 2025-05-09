@@ -27,17 +27,16 @@
         .cell {
             display: table-cell;
             vertical-align: middle;
-            height: 50px; /* Adjust as needed */
+            padding: 5px 15px; /* Add padding inside cells */
+            height: 50px;
         }
         /* Tag cells (1 and 5) */
         .cell.tag {
             background-color: #40E0D0; /* Turquoise */
             text-align: right; /* Right alignment for Cell 1 */
-            padding-right: 10px;
         }
         .cell.tag:last-child {
             text-align: left; /* Left alignment for Cell 5 */
-            padding-left: 10px;
         }
         /* Score cells (2 and 4) */
         .cell.score {
@@ -140,12 +139,16 @@
                     [team1, team2] = teamData.sort((a, b) => a.name.localeCompare(b.name));
                 }
 
+                // Find the largest tag size
+                const maxTagLength = Math.max(team1.name.length, team2.name.length);
+
                 return {
                     tag1: team1.name,
                     score1: team1.score,
                     race: raceNumber,
                     score2: team2.score,
                     tag2: team2.name,
+                    maxTagLength,
                 };
             }
         }
@@ -161,8 +164,11 @@
             const row = document.createElement("div");
             row.className = "row";
 
+            const cellWidth = `${data.maxTagLength + 2}ch`; // Add extra space for padding
+
             const cell1 = document.createElement("div");
             cell1.className = "cell tag";
+            cell1.style.width = cellWidth; // Set width dynamically
             cell1.textContent = data.tag1;
 
             const cell2 = document.createElement("div");
@@ -179,6 +185,7 @@
 
             const cell5 = document.createElement("div");
             cell5.className = "cell tag";
+            cell5.style.width = cellWidth; // Set width dynamically
             cell5.textContent = data.tag2;
 
             // Append cells to row
