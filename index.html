@@ -10,29 +10,47 @@
             padding: 0;
             background-color: transparent;
             font-family: 'Roboto Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
         #table-stats {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 30px; /* Base font size */
+            display: table;
+            font-size: 30px;
             font-weight: 500;
-            text-align: center; /* Center align text */
+            text-align: center;
         }
-        /* Default styling for text (dark grey text, black highlight) */
-        .dark-mode .text-highlight {
-            color: black; /* Highlighted text (e.g., player's score) */
+        .row {
+            display: table-row;
         }
-        .dark-mode .text-normal {
-            color: #444444; /* Dark grey text for other elements */
+        .cell {
+            display: table-cell;
+            vertical-align: middle;
         }
-        /* Styling for &white parameter (light grey text, white highlight) */
-        .white-mode .text-highlight {
-            color: white; /* Highlighted text (e.g., player's score) */
+        /* Tag cells (1 and 5) */
+        .cell.tag {
+            text-align: right; /* Right alignment for Cell 1 */
+            padding-right: 10px;
         }
-        .white-mode .text-normal {
-            color: #bebebe; /* Light grey text for other elements */
+        .cell.tag:last-child {
+            text-align: left; /* Left alignment for Cell 5 */
+            padding-left: 10px;
+        }
+        /* Score cells (2 and 4) */
+        .cell.score {
+            width: 3ch; /* Fixed width for scores */
+        }
+        .cell.score:nth-child(2) {
+            text-align: right; /* Right alignment for Cell 2 */
+        }
+        .cell.score:nth-child(4) {
+            text-align: left; /* Left alignment for Cell 4 */
+        }
+        /* Race number cell (3) */
+        .cell.race {
+            font-size: 15px; /* Half the font size */
+            width: 3ch; /* Fixed width for race number */
         }
     </style>
 </head>
@@ -40,14 +58,7 @@
     <div id="table-stats"></div>
 
     <script>
-        // Function to format tags and avoid double brackets
-        function formatTag(tag) {
-            if (tag.startsWith('[') && tag.endsWith(']')) {
-                return tag;
-            }
-            return `[${tag}]`;
-        }
-
+        // Function to fetch and render data
         async function fetchAndRenderData() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -124,19 +135,57 @@
                     [team1, team2] = teamData.sort((a, b) => a.name.localeCompare(b.name));
                 }
 
-                return `${formatTag(team1.name)} ${team1.score} R${raceNumber} ${team2.score} ${formatTag(team2.name)}`;
+                return {
+                    tag1: team1.name,
+                    score1: team1.score,
+                    race: raceNumber,
+                    score2: team2.score,
+                    tag2: team2.name,
+                };
             }
         }
 
-        function renderFormattedData(formattedData, isWarMode) {
+        function renderFormattedData(data, isWarMode) {
             const tableContainer = document.getElementById("table-stats");
-            tableContainer.innerHTML = formattedData;
-
-            if (isWarMode) {
-                tableContainer.style.textAlign = "center";
-            } else {
-                tableContainer.style.textAlign = "left";
+            if (!isWarMode || typeof data === "string") {
+                tableContainer.innerHTML = data;
+                return;
             }
+
+            // Create table row and cells
+            const row = document.createElement("div");
+            row.className = "row";
+
+            const cell1 = document.createElement("div");
+            cell1.className = "cell tag";
+            cell1.textContent = data.tag1;
+
+            const cell2 = document.createElement("div");
+            cell2.className = "cell score";
+            cell2.textContent = data.score1;
+
+            const cell3 = document.createElement("div");
+            cell3.className = "cell race";
+            cell3.textContent = `R${data.race}`;
+
+            const cell4 = document.createElement("div");
+            cell4.className = "cell score";
+            cell4.textContent = data.score2;
+
+            const cell5 = document.createElement("div");
+            cell5.className = "cell tag";
+            cell5.textContent = data.tag2;
+
+            // Append cells to row
+            row.appendChild(cell1);
+            row.appendChild(cell2);
+            row.appendChild(cell3);
+            row.appendChild(cell4);
+            row.appendChild(cell5);
+
+            // Clear container and append row
+            tableContainer.innerHTML = "";
+            tableContainer.appendChild(row);
         }
 
         function parseFFAFormat(tempElement, playerName, raceNumber, format) {
