@@ -27,9 +27,11 @@
         .cell {
             display: table-cell;
             vertical-align: middle;
+            height: 50px; /* Adjust as needed */
         }
         /* Tag cells (1 and 5) */
         .cell.tag {
+            background-color: #40E0D0; /* Turquoise */
             text-align: right; /* Right alignment for Cell 1 */
             padding-right: 10px;
         }
@@ -39,6 +41,7 @@
         }
         /* Score cells (2 and 4) */
         .cell.score {
+            background-color: #A9A9A9; /* Medium Grey */
             width: 3ch; /* Fixed width for scores */
         }
         .cell.score:nth-child(2) {
@@ -49,8 +52,10 @@
         }
         /* Race number cell (3) */
         .cell.race {
+            background-color: #696969; /* Dark Grey */
             font-size: 15px; /* Half the font size */
-            width: 3ch; /* Fixed width for race number */
+            width: 3ch; /* Same width as score cells */
+            text-align: center;
         }
     </style>
 </head>
