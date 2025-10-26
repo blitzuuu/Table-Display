@@ -69,7 +69,7 @@
                 }
 
                 // Fetch the table data using the 'tableid'
-                const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.site/api/html/full_scores/${tableId}`);
+                const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.live/api/html/full_scores/${tableId}`);
                 if (!tableResponse.ok) {
                     // If response is invalid, clear the display
                     document.getElementById("table-stats").innerHTML = "";
