@@ -45,9 +45,9 @@ Selector:
 
 Example:
 ```css
-/* hot pink (current) */
+/* current black */
 .war-center .war-box.tag {
-  background: #ff2d95;
+  background: #000000;
 }
 
 /* change to deep blue */
