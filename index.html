@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Table Display</title>
     <style>
-        body {
+        /* Prevent any scrollbars from appearing in the overlay */
+        html, body {
+            height: 100%;
             margin: 0;
             padding: 0;
+            overflow: hidden; /* ensure no scrollbars */
             background-color: transparent;
             font-family: 'Roboto Mono', monospace;
         }
+
         /* Make the element exactly 1920px wide so OBS doesn't need adjustments */
         #table-stats {
             position: absolute;
@@ -23,7 +27,7 @@
             padding: 0 10px;
             /* allow normal wrapping/layout for war-center */
             white-space: normal;
-            overflow: visible;
+            overflow: visible; /* allow composed elements to overflow visually without creating scrollbars */
         }
 
         /* Default styling for text (dark grey text, black highlight) */
@@ -301,7 +305,7 @@
             leftScoreSpan.textContent = scoreLeft;
             leftScoreBox.appendChild(leftScoreSpan);
 
-            // Race Count (Box C) - smaller font, center aligned, bottom aligned with other text
+            // Race Count (Box C) - slightly higher than before, center aligned, bottom aligned with other text
             const raceBox = document.createElement('div');
             raceBox.className = 'war-box race';
             raceBox.style.width = boxCWidth + 'px';
@@ -312,8 +316,8 @@
             // Make race label smaller visually
             raceSpan.style.fontSize = '0.6em';
             raceSpan.style.display = 'inline-block';
-            // nudge so the bottom aligns visually with other text (tweakable)
-            raceSpan.style.transform = 'translateY(6px)';
+            // Slightly higher than before: reduce the downward nudge so it sits a bit higher visually.
+            raceSpan.style.transform = 'translateY(4px)'; // previously was 6px
             raceBox.appendChild(raceSpan);
 
             // Right Score (Box B) - right aligned
