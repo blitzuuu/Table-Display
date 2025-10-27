@@ -21,9 +21,10 @@
             font-weight: 500;
             box-sizing: border-box;
             padding: 0 10px;
-            white-space: nowrap;
+            /* remove nowrap so flex/blocks can layout correctly for the war center */
+            white-space: normal;
+            overflow: visible;
         }
-
         /* Flex container used for centered war layout */
         .war-center {
             display: flex;
@@ -89,6 +90,7 @@
     <script>
         // Utility: format tags consistently
         function formatTag(tag) {
+            if (!tag) return "[Unknown]";
             if (tag.startsWith('[') && tag.endsWith(']')) return tag;
             return `[${tag}]`;
         }
@@ -123,8 +125,22 @@
                 const tableHTML = await tableResponse.text();
                 const parsed = parseTableData(tableHTML, playerName);
 
-                // If center requested but not exactly two teams, fallback to left
-                const effectiveAlign = (align === 'center' && parsed.teams && parsed.teams.length === 2) ? 'center' : (align === 'center' ? 'left' : align);
+                // compute effectiveAlign robustly: only allow 'center' when parsed.type === 'teams' and exactly 2 teams
+                let effectiveAlign;
+                if (align === 'center') {
+                    if (parsed && parsed.type === 'teams' && Array.isArray(parsed.teams) && parsed.teams.length === 2) {
+                        effectiveAlign = 'center';
+                    } else {
+                        effectiveAlign = 'left';
+                    }
+                } else if (align === 'right') {
+                    effectiveAlign = 'right';
+                } else {
+                    effectiveAlign = 'left';
+                }
+
+                // debug logging to help track why center might not be selected (remove in production)
+                console.debug('fetchAndRenderData', { tableId, align, effectiveAlign, parsed });
 
                 render(parsed, effectiveAlign);
             } catch (error) {
@@ -169,17 +185,21 @@
             const container = document.getElementById("table-stats");
             container.innerHTML = "";
 
+            if (!parsed) {
+                console.warn('render: parsed is falsy');
+                return;
+            }
+
             if (parsed.type === 'ffa') {
                 // same rendering as before for FFA
                 const playerScores = parsed.players.map(p => `<span class="text-normal">${p.total}</span>`);
                 container.innerHTML = `<span class="text-normal">R${parsed.raceNumber} ${parsed.format}</span> <span class="text-normal">|</span> ${playerScores.join('<span class="text-normal">, </span>')}`;
-                container.style.textAlign = effectiveAlign === 'right' ? 'right' : 'left';
-                if (effectiveAlign === 'center') container.style.textAlign = 'center';
+                container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
                 return;
             }
 
             // Teams rendering
-            if (effectiveAlign === 'center' && parsed.teams.length === 2) {
+            if (effectiveAlign === 'center' && parsed.type === 'teams' && parsed.teams.length === 2) {
                 renderWarCenter(container, parsed);
                 return;
             }
@@ -192,6 +212,12 @@
 
         // Build the special "Centered (War)" layout in DOM (not plain HTML string)
         function renderWarCenter(container, parsed) {
+            // Safety checks
+            if (!parsed || parsed.type !== 'teams' || parsed.teams.length !== 2) {
+                console.warn('renderWarCenter called with invalid parsed data', parsed);
+                return;
+            }
+
             // container: #table-stats
             // parsed.teams: [{name, score}, {name, score}]
             // We need to measure monospace character width at the container font-size.
@@ -204,13 +230,13 @@
             meas.style.fontFamily = getComputedStyle(container).fontFamily || 'Roboto Mono, monospace';
             meas.style.fontSize = getComputedStyle(container).fontSize || '30px';
             meas.style.fontWeight = getComputedStyle(container).fontWeight || '500';
-            meas.textContent = '0'.repeat(40); // long string
+            meas.textContent = '0'.repeat(80); // long string for accurate measurement
             document.body.appendChild(meas);
-            const totalWidth = meas.getBoundingClientRect().width;
-            const charWidth = totalWidth / 40;
+            const totalWidth = meas.getBoundingClientRect().width || 1;
+            const charWidth = totalWidth / 80;
             document.body.removeChild(meas);
 
-            const padding = Math.round(charWidth * 0.6); // a little padding inside boxes
+            const padding = Math.max(4, Math.round(charWidth * 0.6)); // a little padding inside boxes
 
             const tag1 = formatTag(parsed.teams[0].name);
             const tag2 = formatTag(parsed.teams[1].name);
@@ -233,6 +259,7 @@
             // Build DOM nodes
             const wrapper = document.createElement('div');
             wrapper.className = 'war-center';
+            wrapper.style.gap = Math.round(charWidth * 1.2) + 'px';
 
             // Left Tag (Box A) - left aligned text inside
             const leftTagBox = document.createElement('div');
@@ -264,9 +291,9 @@
             raceSpan.textContent = raceLabel;
             // Make race label smaller visually
             raceSpan.style.fontSize = '0.6em';
-            // Slight nudge so its bottom lines up with other text: use translateY
             raceSpan.style.display = 'inline-block';
-            raceSpan.style.transform = 'translateY(6px)'; // tweak so bottoms align visually
+            // nudge so the bottom aligns visually with other text (tweakable)
+            raceSpan.style.transform = 'translateY(6px)';
             raceBox.appendChild(raceSpan);
 
             // Right Score (Box B) - right aligned
@@ -296,7 +323,10 @@
             wrapper.appendChild(rightScoreBox);
             wrapper.appendChild(rightTagBox);
 
+            // ensure container is empty then append
+            container.innerHTML = '';
             container.appendChild(wrapper);
+
             // make sure container has center text alignment
             container.style.textAlign = 'center';
         }
