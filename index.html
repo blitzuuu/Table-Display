@@ -15,6 +15,10 @@
             font-family: 'Roboto Mono', monospace;
         }
 
+        :root {
+            --cell-hpad: 12px; /* horizontal distance from inner cell wall to text (keeps left/right symmetric) */
+        }
+
         /* Make the element exactly 1920px wide so OBS doesn't need adjustments */
         #table-stats {
             position: absolute;
@@ -69,9 +73,9 @@
             align-items: center;
             justify-content: center;
             box-sizing: border-box;
-            /* horizontal padding for readable text, but vertical padding will expand the wrapper height
-               so backgrounds still reach the top/bottom of the outer border */
-            padding: 6px 10px;
+            /* vertical padding retained to create height while horizontal padding is handled on the inner text element
+               so we can guarantee equal horizontal offsets from each cell's wall. */
+            padding: 6px 0;
             min-height: 1em;
             border: none; /* no inner borders */
             margin: 0;
@@ -127,10 +131,15 @@
             line-height: 1;
         }
 
-        /* Text alignment helpers inside each box */
-        .left-align { text-align: left; padding-left: 6px; box-sizing: border-box; }
-        .right-align { text-align: right; padding-right: 6px; box-sizing: border-box; }
-        .center-align { text-align: center; box-sizing: border-box; }
+        /* Text alignment helpers inside each box -
+           IMPORTANT: horizontal spacing from edges is controlled via these paddings
+           so left and right score texts are the same distance from their outer cell walls. */
+        .left-align { text-align: left; padding-left: var(--cell-hpad); box-sizing: border-box; }
+        .right-align { text-align: right; padding-right: var(--cell-hpad); box-sizing: border-box; }
+        .center-align { text-align: center; box-sizing: border-box; padding-left: var(--cell-hpad); padding-right: var(--cell-hpad); }
+
+        /* smaller visual tweak for the race label so it sits nicely */
+        .war-box.race .text { font-size: 0.6em; display:inline-block; transform: translateY(4px); }
     </style>
 </head>
 <body>
@@ -319,7 +328,7 @@
             const charWidth = totalWidth / 80;
             document.body.removeChild(meas);
 
-            // horizontal padding inside each cell (kept, but wrapper has no padding so backgrounds meet outer border)
+            // horizontal padding used when computing box widths; actual rendering uses CSS var --cell-hpad for precise spacing
             const cellPadding = Math.max(4, Math.round(charWidth * 0.6));
 
             // IMPORTANT: For centered layout we DO NOT add brackets around tags.
@@ -346,11 +355,6 @@
             // Build DOM nodes
             const wrapper = document.createElement('div');
             wrapper.className = 'war-center';
-            // ensure no gaps and keep wrapper shrink-wrapped to content width
-            wrapper.style.gap = '0px';
-            wrapper.style.padding = '0px';
-            wrapper.style.display = 'inline-flex';
-            wrapper.style.alignItems = 'stretch';
 
             // Left Tag (Box A) - left aligned text inside
             const leftTagBox = document.createElement('div');
@@ -362,7 +366,7 @@
             leftTagSpan.textContent = tagLeft;
             leftTagBox.appendChild(leftTagSpan);
 
-            // Left Score (Box B) - left aligned
+            // Left Score (Box B) - left aligned (same offset from its left edge as right score is from its right edge)
             const leftScoreBox = document.createElement('div');
             leftScoreBox.className = 'war-box score';
             leftScoreBox.style.width = boxBWidth + 'px';
@@ -372,7 +376,7 @@
             leftScoreSpan.textContent = scoreLeft;
             leftScoreBox.appendChild(leftScoreSpan);
 
-            // Race Count (Box C) - center aligned, slightly smaller
+            // Race Count (Box C) - center aligned
             const raceBox = document.createElement('div');
             raceBox.className = 'war-box race';
             raceBox.style.width = boxCWidth + 'px';
@@ -380,12 +384,9 @@
             const raceSpan = document.createElement('span');
             raceSpan.className = 'text center-align';
             raceSpan.textContent = raceLabel;
-            raceSpan.style.fontSize = '0.6em';
-            raceSpan.style.display = 'inline-block';
-            raceSpan.style.transform = 'translateY(4px)'; // keep the slight vertical adjustment
             raceBox.appendChild(raceSpan);
 
-            // Right Score (Box B) - right aligned
+            // Right Score (Box B) - right aligned (same offset from its right edge as left score from left edge)
             const rightScoreBox = document.createElement('div');
             rightScoreBox.className = 'war-box score';
             rightScoreBox.style.width = boxBWidth + 'px';
