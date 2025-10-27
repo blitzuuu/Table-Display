@@ -28,6 +28,7 @@
             /* allow normal wrapping/layout for war-center */
             white-space: normal;
             overflow: visible; /* allow composed elements to overflow visually without creating scrollbars */
+            text-align: center; /* default center when using centered war layout */
         }
 
         /* Default styling for text (dark grey text, black highlight) */
@@ -45,20 +46,21 @@
             color: #bebebe; /* Light grey text for other elements */
         }
 
-        /* Flex container used for centered war layout */
+        /* Flex container used for centered war layout
+           Use inline-flex so the outer border only wraps the content width
+           Remove internal gap and wrapper padding so cell backgrounds meet each other
+           and touch the top/bottom of the outer border. */
         .war-center {
-            display: flex;
+            display: inline-flex;
             justify-content: center;
-            align-items: flex-end; /* align bottoms so race-count can be aligned to bottom */
-            gap: 12px;
-
-            /* Outer border surrounding all cells (no inner borders) */
+            align-items: stretch; /* stretch children to fill vertical space so backgrounds reach top/bottom */
+            gap: 0;                 /* no gap so backgrounds are flush against each other */
             border: 2px solid #333333; /* dark grey outer border */
             border-radius: 6px;
-            padding: 4px; /* small padding so cell backgrounds don't touch the outer border directly */
+            padding: 0; /* no inner padding so children backgrounds touch the outer border */
             background: transparent;
             box-sizing: border-box;
-            align-items: center;
+            overflow: hidden; /* ensures children backgrounds are clipped to rounded corners */
         }
 
         /* Box styles */
@@ -67,10 +69,14 @@
             align-items: center;
             justify-content: center;
             box-sizing: border-box;
-            padding: 6px 8px;
+            /* horizontal padding for readable text, but vertical padding will expand the wrapper height
+               so backgrounds still reach the top/bottom of the outer border */
+            padding: 6px 10px;
             min-height: 1em;
-            /* ensure inner boxes DO NOT show borders (outer border only) */
-            border: none;
+            border: none; /* no inner borders */
+            margin: 0;
+            line-height: 1;
+            white-space: nowrap;
         }
 
         /* Background colors for each cell type (centered/war layout) */
@@ -104,6 +110,8 @@
             font-weight: 600;
             line-height: 1;
             white-space: nowrap;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .war-box.tag .text { /* Box A styling */
@@ -120,9 +128,9 @@
         }
 
         /* Text alignment helpers inside each box */
-        .left-align { text-align: left; width: 100%; padding-left: 6px; box-sizing: border-box; }
-        .right-align { text-align: right; width: 100%; padding-right: 6px; box-sizing: border-box; }
-        .center-align { text-align: center; width: 100%; box-sizing: border-box; }
+        .left-align { text-align: left; padding-left: 6px; box-sizing: border-box; }
+        .right-align { text-align: right; padding-right: 6px; box-sizing: border-box; }
+        .center-align { text-align: center; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -311,7 +319,8 @@
             const charWidth = totalWidth / 80;
             document.body.removeChild(meas);
 
-            const padding = Math.max(4, Math.round(charWidth * 0.6));
+            // horizontal padding inside each cell (kept, but wrapper has no padding so backgrounds meet outer border)
+            const cellPadding = Math.max(4, Math.round(charWidth * 0.6));
 
             // IMPORTANT: For centered layout we DO NOT add brackets around tags.
             const tagLeft = (leftTeam.name || "Unknown");
@@ -321,22 +330,27 @@
             // Race label now contains only the race count (format removed)
             const raceLabel = `R${parsed.raceNumber}`;
 
-            // Compute widths in px
-            const lenTagLeft = tagLeft.length;
-            const lenTagRight = tagRight.length;
-            const boxAChars = Math.max(lenTagLeft, lenTagRight); // Box A: width based on larger tag
-            const boxAWidth = Math.ceil(boxAChars * charWidth) + padding * 2;
+            // enforce minimum tag width of 3 characters, grow for longer tags
+            const minTagChars = 3;
+            const lenTagLeft = Math.max(minTagChars, tagLeft.length);
+            const lenTagRight = Math.max(minTagChars, tagRight.length);
+            const boxAChars = Math.max(lenTagLeft, lenTagRight); // Box A: width based on larger tag (and min 3)
+            const boxAWidth = Math.ceil(boxAChars * charWidth) + cellPadding * 2;
 
-            const boxBChars = 3; // 3 character widths
-            const boxBWidth = Math.ceil(boxBChars * charWidth) + padding * 2;
+            const boxBChars = 3; // 3 character widths for score cells
+            const boxBWidth = Math.ceil(boxBChars * charWidth) + cellPadding * 2;
 
             const boxCChars = Math.max(1, Math.floor(boxBChars * 0.8)); // slightly smaller than B
-            const boxCWidth = Math.ceil(boxCChars * charWidth) + padding * 2;
+            const boxCWidth = Math.ceil(boxCChars * charWidth) + cellPadding * 2;
 
             // Build DOM nodes
             const wrapper = document.createElement('div');
             wrapper.className = 'war-center';
-            wrapper.style.gap = Math.round(charWidth * 1.2) + 'px';
+            // ensure no gaps and keep wrapper shrink-wrapped to content width
+            wrapper.style.gap = '0px';
+            wrapper.style.padding = '0px';
+            wrapper.style.display = 'inline-flex';
+            wrapper.style.alignItems = 'stretch';
 
             // Left Tag (Box A) - left aligned text inside
             const leftTagBox = document.createElement('div');
@@ -402,7 +416,7 @@
             container.innerHTML = '';
             container.appendChild(wrapper);
 
-            // center the overall container
+            // ensure the table-stats container centers the inline-flex wrapper
             container.style.textAlign = 'center';
         }
 
