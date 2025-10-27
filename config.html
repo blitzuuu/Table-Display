@@ -8,37 +8,43 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
   <style>
-    :root {
+    :root{
       --container-width: 300px;
       --container-padding: 20px;
-      --field-gap: 15px;
-      --control-height: 35px; /* unified control height for input & buttons */
+      --gap: 15px;
+      --control-height: 36px; /* unified height for input, align buttons, and update/reset */
       --field-bg: #d3d3d3;
       --selected-bg: #0d6efd;
       --selected-color: #fff;
       --text-color: #000;
       --font-size: 14px;
-      --btn-font-size: 14px;
-      --align-btn-font-size: 13px;
-      --gap-between-align-buttons: 8px;
+      --align-font-size: 13px;
+      --button-gap: 8px;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
     }
 
     body {
       font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #18181b; /* Full page background color */
+      background-color: #18181b;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
     }
+
+    /* Make container use border-box so children with width:100% line up perfectly */
     .config-container {
       width: var(--container-width);
       padding: var(--container-padding);
-      position: relative;
       box-sizing: border-box;
     }
+
     .config-container label {
       display: block;
       font-size: var(--font-size);
@@ -46,110 +52,90 @@
       color: white;
     }
 
-    /* Make inputs and buttons use border-box so widths/heights are stable across browsers */
-    .config-container input,
-    .config-container .align-group,
-    .config-container .button-group {
-      box-sizing: border-box;
-    }
-
-    /* Table ID field - same overall width as the button group (two 48% buttons) */
+    /* ---- IMPORTANT: use border-box and width:100% so everything lines up exactly ---- */
     .config-container input {
-      width: calc(100% - 20px); /* preserves previous visual alignment */
-      padding: 8px 10px;
-      margin-bottom: var(--field-gap);
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 12px;
+      margin-bottom: var(--gap);
       border: none;
       border-radius: 5px;
       background-color: var(--field-bg);
       color: var(--text-color);
       font-size: var(--font-size);
-      height: var(--control-height); /* same height as update/reset buttons */
+      height: var(--control-height); /* matches buttons */
       line-height: 1.1;
-      box-sizing: content-box; /* keep the calc(100% - 20px) behavior used before */
     }
-    .config-container input:focus {
-      outline: none;
-    }
+    .config-container input:focus { outline: none; }
 
-    /* Alignment button group uses the same TOTAL width as input & button group */
+    /* Align group uses width:100% and flex children that expand equally */
     .align-group {
-      width: calc(100% - 20px); /* same visual width as input */
+      width: 100%;
       display: flex;
-      gap: var(--gap-between-align-buttons);
-      margin-bottom: var(--field-gap);
-      box-sizing: content-box;
+      gap: var(--button-gap);
+      margin-bottom: var(--gap);
+      box-sizing: border-box;
     }
 
-    /* Each align button stretches equally to fill the align-group.
-       Use display:flex with center alignment so wrapped text stays vertically centered. */
     .align-group .align-btn {
       flex: 1 1 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 8px;
+      height: var(--control-height);
+      box-sizing: border-box;
       background-color: var(--field-bg);
       color: var(--text-color);
       border: none;
       border-radius: 5px;
-      padding: 6px 8px;
-      font-size: var(--align-btn-font-size);
+      font-size: var(--align-font-size);
       cursor: pointer;
-      height: var(--control-height); /* matches input & update/reset buttons */
-      line-height: 1.05;
-      box-sizing: border-box;
       text-align: center;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      white-space: normal;         /* allow wrapping if needed */
-      word-break: break-word;      /* break long words if necessary */
+      /* allow wrapping if needed but center vertically */
+      white-space: normal;
+      line-height: 1.05;
+      word-break: break-word;
     }
 
     .align-group .align-btn:focus {
       outline: none;
-      box-shadow: 0 0 0 3px rgba(13,110,253,0.12); /* subtle focus ring */
+      box-shadow: 0 0 0 3px rgba(13,110,253,0.12);
     }
 
-    /* Selected state: invert to blue background and white text */
-    .align-group .align-btn.selected {
+    .align-group .align-btn.selected{
       background-color: var(--selected-bg);
       color: var(--selected-color);
     }
 
-    /* update/reset buttons keep previous visual style and widths */
-    .config-container button {
-      width: 48%;
-      padding: 8px 10px;
-      font-size: var(--btn-font-size);
+    /* Button group now uses flex with gap and flex:1 so its total width equals the input & align-group */
+    .button-group {
+      display: flex;
+      gap: var(--button-gap);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .button-group button {
+      flex: 1 1 0;
+      padding: 8px 12px;
+      font-size: var(--font-size);
       border: none;
       cursor: pointer;
       border-radius: 5px;
       color: white;
-      height: var(--control-height); /* unify height across all controls */
-      opacity: 0.9;
+      height: var(--control-height);
       box-sizing: border-box;
+      opacity: 0.95;
     }
-    .config-container button.update {
-      background-color: #5cb85c; /* Muted green for update */
-    }
-    .config-container button.reset {
-      background-color: #d9534f; /* Muted red for reset */
-    }
-    .config-container button:hover {
-      opacity: 1.0;
-    }
-    .button-group {
-      display: flex;
-      justify-content: space-between;
-    }
+    .button-group button.update { background-color: #5cb85c; }
+    .button-group button.reset { background-color: #d9534f; }
+    .button-group button:hover { opacity: 1; }
 
-    /* ensure long labels fit by allowing two-line wrapping on the center button */
-    .align-group .align-btn span {
-      display: inline-block;
-      padding: 0 2px;
-      line-height: 1.05;
-    }
-
-    /* Accessibility: make the radiogroup visually consistent on reduced widths */
+    /* small responsive tweak */
     @media (max-width: 360px) {
       :root { --container-width: 92vw; }
+      .align-group .align-btn { font-size: 12px; }
     }
   </style>
 </head>
@@ -159,14 +145,12 @@
     <input type="text" id="tableid-input" placeholder="Enter Table ID" />
 
     <label for="align-select">Text Alignment</label>
-    <!-- alignment buttons: same total width as the text field and update/reset group -->
     <div class="align-group" role="radiogroup" aria-label="Text Alignment">
-      <button type="button" class="align-btn" data-align="left" id="align-left" aria-pressed="true"><span>Left</span></button>
-      <button type="button" class="align-btn" data-align="center" id="align-center" aria-pressed="false"><span>Centered (War)</span></button>
-      <button type="button" class="align-btn" data-align="right" id="align-right" aria-pressed="false"><span>Right</span></button>
+      <button type="button" class="align-btn" data-align="left" id="align-left" aria-pressed="true">Left</button>
+      <button type="button" class="align-btn" data-align="center" id="align-center" aria-pressed="false">Centered (War)</button>
+      <button type="button" class="align-btn" data-align="right" id="align-right" aria-pressed="false">Right</button>
     </div>
 
-    <!-- Hidden field to store current alignment value for broadcasting -->
     <input type="hidden" id="align-value" value="left" />
 
     <div class="button-group">
@@ -188,7 +172,6 @@
 
       tableIdInput.value = currentTableId;
 
-      // Helper to set selected button visually & for accessibility
       function setSelectedButton(value) {
         alignButtons.forEach(btn => {
           const btnAlign = btn.getAttribute("data-align");
@@ -199,21 +182,17 @@
         alignValueInput.value = value;
       }
 
-      // Initialize alignment from URL (default to left)
       if (["left", "center", "right"].includes(currentAlign)) {
         setSelectedButton(currentAlign);
       } else {
         setSelectedButton("left");
       }
 
-      // Wire up clicks on alignment buttons
       alignButtons.forEach(btn => {
         btn.addEventListener("click", () => {
           const value = btn.getAttribute("data-align");
           setSelectedButton(value);
         });
-
-        // keyboard support: space/enter toggle
         btn.addEventListener("keydown", (e) => {
           if (e.key === " " || e.key === "Enter") {
             e.preventDefault();
@@ -224,27 +203,19 @@
         });
       });
 
-      // Function to show a bold checkmark on a button
       function showCheckmark(button) {
         const originalText = button.innerHTML;
         button.innerHTML = "<b>✔</b>";
-        setTimeout(() => {
-          button.innerHTML = originalText; // Reset back to the original text
-        }, 3000); // Reset after 3 seconds
+        setTimeout(() => { button.innerHTML = originalText; }, 3000);
       }
 
-      // Function to reset the input field
-      function resetInput() {
-        tableIdInput.value = ""; // Clear the input field
-      }
+      function resetInput() { tableIdInput.value = ""; }
 
-      // Fetch player_data.json to validate names
+      // Validate player_data.json (same behaviour as before)
       try {
         const response = await fetch("player_data.json");
         const playerData = await response.json();
         const validNames = playerData.map(player => player.name);
-
-        // Validate the 'name' parameter
         if (!name || !validNames.includes(name)) {
           document.body.innerHTML = `<h1>Error</h1><p>The config page cannot be used without a valid 'name' parameter in the URL.</p>`;
           return;
@@ -254,28 +225,18 @@
         return;
       }
 
-      // Update button functionality
       document.getElementById("update-btn").addEventListener("click", () => {
         const newTableId = tableIdInput.value.trim();
         const selectedAlign = alignValueInput.value || "left";
-
-        // Broadcast the updated table ID and alignment (treat empty as reset)
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: newTableId, align: selectedAlign });
-
-        // Show checkmark on the Update button
         showCheckmark(document.getElementById("update-btn"));
       });
 
-      // Reset button functionality
       document.getElementById("reset-btn").addEventListener("click", () => {
         resetInput();
-
-        // Broadcast a message with an empty table ID but keep the currently selected alignment
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: "", align: alignValueInput.value || "left" });
-
-        // Show checkmark on the Reset button
         showCheckmark(document.getElementById("reset-btn"));
       });
     });
