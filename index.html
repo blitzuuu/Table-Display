@@ -128,7 +128,7 @@
                 }
 
                 const tableHTML = await tableResponse.text();
-                const parsed = parseTableData(tableHTML, playerName);
+                const parsed = parseTableData(tableHTML);
 
                 // compute effectiveAlign: allow center only when teams length === 2
                 let effectiveAlign;
@@ -152,7 +152,7 @@
         }
 
         // Parse table HTML into a structured object
-        function parseTableData(rawHTML, playerName) {
+        function parseTableData(rawHTML) {
             const temp = document.createElement("div");
             temp.innerHTML = rawHTML;
 
@@ -189,9 +189,19 @@
 
             if (!parsed) return;
 
+            // Helper to check player membership (case-insensitive)
+            function playerInTeam(team, player) {
+                if (!player) return false;
+                return Array.isArray(team.players) && team.players.some(p => p.toLowerCase() === player.toLowerCase());
+            }
+
             if (parsed.type === 'ffa') {
-                // FFA rendering: show race number only (format text removed)
-                const playerScores = parsed.players.map(p => `<span class="text-normal">${p.total}</span>`);
+                // FFA rendering: highlight the set player if present (use text-highlight)
+                const playerScores = parsed.players.map(player => {
+                    const isMatch = playerName && player.name.toLowerCase() === playerName.toLowerCase();
+                    const cls = isMatch ? 'text-highlight' : 'text-normal';
+                    return `<span class="${cls}">${player.total}</span>`;
+                });
                 container.innerHTML = `<span class="text-normal">R${parsed.raceNumber}</span> <span class="text-normal">|</span> ${playerScores.join('<span class="text-normal">, </span>')}`;
                 container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
                 return;
@@ -199,13 +209,20 @@
 
             // Teams rendering
             if (effectiveAlign === 'center' && parsed.type === 'teams' && parsed.teams.length === 2) {
+                // centered war layout intentionally has no highlighting (per your request)
                 renderWarCenter(container, parsed, playerName);
                 return;
             }
 
-            // Default teams rendering (left/right/center simple join) - format text removed
-            const teamScoresHtml = parsed.teams.map(team => `<span class="text-normal">${formatTag(team.name)} ${team.score}</span>`);
-            container.innerHTML = `<span class="text-normal">R${parsed.raceNumber}</span> <span class="text-normal">|</span> ${teamScoresHtml.join('<span class="text-normal"> | </span>')}`;
+            // Default teams rendering (left/right/center simple join) - apply highlighting for the team containing player
+            const teamParts = parsed.teams.map(team => {
+                const isMatch = playerName && playerInTeam(team, playerName);
+                const cls = isMatch ? 'text-highlight' : 'text-normal';
+                return `<span class="${cls}">${formatTag(team.name)} ${team.score}</span>`;
+            });
+
+            container.innerHTML = `<span class="text-normal">R${parsed.raceNumber}</span> <span class="text-normal">|</span> ${teamParts.join('<span class="text-normal"> | </span>')}`;
+
             container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
         }
 
@@ -317,7 +334,7 @@
             raceSpan.style.fontSize = '0.6em';
             raceSpan.style.display = 'inline-block';
             // Slightly higher than before: reduce the downward nudge so it sits a bit higher visually.
-            raceSpan.style.transform = 'translateY(-4px)'; // previously was 6px
+            raceSpan.style.transform = 'translateY(4px)'; // previously was 6px
             raceBox.appendChild(raceSpan);
 
             // Right Score (Box B) - right aligned
