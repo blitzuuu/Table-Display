@@ -51,6 +51,14 @@
             justify-content: center;
             align-items: flex-end; /* align bottoms so race-count can be aligned to bottom */
             gap: 12px;
+
+            /* Outer border surrounding all cells (no inner borders) */
+            border: 2px solid #333333; /* dark grey outer border */
+            border-radius: 6px;
+            padding: 4px; /* small padding so cell backgrounds don't touch the outer border directly */
+            background: transparent;
+            box-sizing: border-box;
+            align-items: center;
         }
 
         /* Box styles */
@@ -58,8 +66,36 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: transparent;
             box-sizing: border-box;
+            padding: 6px 8px;
+            min-height: 1em;
+            /* ensure inner boxes DO NOT show borders (outer border only) */
+            border: none;
+        }
+
+        /* Background colors for each cell type (centered/war layout) */
+        .war-center .war-box.tag {
+            background: #ff2d95; /* hot pink for tag cells */
+        }
+        .war-center .war-box.score {
+            background: #6f6f6f; /* less dark grey for score cells */
+        }
+        .war-center .war-box.race {
+            background: #dcdcdc; /* light grey for race count cell */
+        }
+
+        /* Ensure text colors contrast with the backgrounds in war-center */
+        .war-center .war-box.tag .text {
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .war-center .war-box.score .text {
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .war-center .war-box.race .text {
+            color: #000000;
+            font-weight: 700;
         }
 
         .war-box .text {
@@ -277,8 +313,9 @@
 
             const padding = Math.max(4, Math.round(charWidth * 0.6));
 
-            const tagLeft = formatTag(leftTeam.name);
-            const tagRight = formatTag(rightTeam.name);
+            // IMPORTANT: For centered layout we DO NOT add brackets around tags.
+            const tagLeft = (leftTeam.name || "Unknown");
+            const tagRight = (rightTeam.name || "Unknown");
             const scoreLeft = leftTeam.score;
             const scoreRight = rightTeam.score;
             // Race label now contains only the race count (format removed)
@@ -301,14 +338,13 @@
             wrapper.className = 'war-center';
             wrapper.style.gap = Math.round(charWidth * 1.2) + 'px';
 
-            // All centered-format text uses text-normal (no highlighting)
             // Left Tag (Box A) - left aligned text inside
             const leftTagBox = document.createElement('div');
             leftTagBox.className = 'war-box tag';
             leftTagBox.style.width = boxAWidth + 'px';
             leftTagBox.style.textAlign = 'left';
             const leftTagSpan = document.createElement('span');
-            leftTagSpan.className = 'text-normal left-align';
+            leftTagSpan.className = 'text left-align';
             leftTagSpan.textContent = tagLeft;
             leftTagBox.appendChild(leftTagSpan);
 
@@ -318,23 +354,21 @@
             leftScoreBox.style.width = boxBWidth + 'px';
             leftScoreBox.style.textAlign = 'left';
             const leftScoreSpan = document.createElement('span');
-            leftScoreSpan.className = 'text-normal left-align';
+            leftScoreSpan.className = 'text left-align';
             leftScoreSpan.textContent = scoreLeft;
             leftScoreBox.appendChild(leftScoreSpan);
 
-            // Race Count (Box C) - slightly higher than before, center aligned, bottom aligned with other text
+            // Race Count (Box C) - center aligned, slightly smaller
             const raceBox = document.createElement('div');
             raceBox.className = 'war-box race';
             raceBox.style.width = boxCWidth + 'px';
             raceBox.style.textAlign = 'center';
             const raceSpan = document.createElement('span');
-            raceSpan.className = 'text-normal center-align';
+            raceSpan.className = 'text center-align';
             raceSpan.textContent = raceLabel;
-            // Make race label smaller visually
             raceSpan.style.fontSize = '0.6em';
             raceSpan.style.display = 'inline-block';
-            // Slightly higher than before: reduce the downward nudge so it sits a bit higher visually.
-            raceSpan.style.transform = 'translateY(4px)'; // previously was 6px
+            raceSpan.style.transform = 'translateY(4px)'; // keep the slight vertical adjustment
             raceBox.appendChild(raceSpan);
 
             // Right Score (Box B) - right aligned
@@ -343,7 +377,7 @@
             rightScoreBox.style.width = boxBWidth + 'px';
             rightScoreBox.style.textAlign = 'right';
             const rightScoreSpan = document.createElement('span');
-            rightScoreSpan.className = 'text-normal right-align';
+            rightScoreSpan.className = 'text right-align';
             rightScoreSpan.textContent = scoreRight;
             rightScoreBox.appendChild(rightScoreSpan);
 
@@ -353,7 +387,7 @@
             rightTagBox.style.width = boxAWidth + 'px';
             rightTagBox.style.textAlign = 'right';
             const rightTagSpan = document.createElement('span');
-            rightTagSpan.className = 'text-normal right-align';
+            rightTagSpan.className = 'text right-align';
             rightTagSpan.textContent = tagRight;
             rightTagBox.appendChild(rightTagSpan);
 
