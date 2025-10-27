@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Config Page</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,38 +30,57 @@
       color: white;
     }
 
-    /* Restore original width behavior so inputs align with the button group.
-       Use the same calculation for both input and select so they match exactly. */
-    .config-container input,
-    .config-container select {
+    /* Keep the Table ID field sizing exactly as before */
+    .config-container input {
       width: calc(100% - 20px); /* matches original layout */
       padding: 10px;
-      margin-bottom: 15px; /* equal spacing between elements */
+      margin-bottom: 15px;
       border: none;
       border-radius: 5px;
       background-color: #d3d3d3; /* Lighter grey for input */
-      color: #000; /* Black text for better contrast */
-      box-sizing: content-box; /* keep calc sizing behavior consistent with original */
+      color: #000;
+      box-sizing: content-box;
       font-size: 14px;
-    }
-
-    /* Prevent descenders from being clipped inside the select across browsers */
-    .config-container select {
-      /* set a fixed height that matches the previous height of the input area
-         but keep padding/line-height so characters aren't clipped */
       height: 36px;
       line-height: 1.2;
-      -webkit-appearance: menulist-button;
-      -moz-appearance: menulist-button;
-      appearance: menulist-button;
-      /* ensure the internal content has enough space */
-      padding-top: 8px;
-      padding-bottom: 8px;
+    }
+    .config-container input:focus {
+      outline: none;
     }
 
-    .config-container input:focus,
-    .config-container select:focus {
+    /* Alignment button group uses the same width as the text field and same visual color */
+    .align-group {
+      width: calc(100% - 20px); /* same as input */
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px; /* equal spacing to match other fields */
+      box-sizing: content-box;
+    }
+
+    .align-group .align-btn {
+      flex: 1;
+      background-color: #d3d3d3; /* same as text field */
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      height: 36px;
+      line-height: 1.2;
+      box-sizing: border-box;
+      transition: background-color 0.12s ease, color 0.12s ease;
+    }
+
+    .align-group .align-btn:focus {
       outline: none;
+      box-shadow: 0 0 0 3px rgba(13,110,253,0.12); /* subtle focus ring */
+    }
+
+    /* Selected state: invert to blue background and white text */
+    .align-group .align-btn.selected {
+      background-color: #0d6efd; /* bootstrap primary blue (inverted) */
+      color: #fff;
     }
 
     .config-container button {
@@ -72,8 +91,8 @@
       cursor: pointer;
       border-radius: 5px;
       color: white;
-      height: 35px; /* Same height as before */
-      opacity: 0.9; /* Slightly muted button appearance */
+      height: 35px;
+      opacity: 0.9;
     }
     .config-container button.update {
       background-color: #5cb85c; /* Muted green for update */
@@ -82,12 +101,15 @@
       background-color: #d9534f; /* Muted red for reset */
     }
     .config-container button:hover {
-      opacity: 1.0; /* Full opacity on hover */
+      opacity: 1.0;
     }
     .button-group {
       display: flex;
       justify-content: space-between;
     }
+
+    /* Small responsive tweak so long labels don't overflow the button */
+    .align-group .align-btn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   </style>
 </head>
 <body>
@@ -96,11 +118,15 @@
     <input type="text" id="tableid-input" placeholder="Enter Table ID" />
 
     <label for="align-select">Text Alignment</label>
-    <select id="align-select" aria-label="Text Alignment">
-      <option value="left">Left-Aligned</option>
-      <option value="right">Right-Aligned</option>
-      <option value="center">Centered (Two Teams Only)</option>
-    </select>
+    <!-- alignment buttons: same width as text field, three equal buttons inside -->
+    <div class="align-group" role="radiogroup" aria-label="Text Alignment">
+      <button type="button" class="align-btn" data-align="left" id="align-left" aria-pressed="true">Left Aligned</button>
+      <button type="button" class="align-btn" data-align="center" id="align-center" aria-pressed="false">Centered (War)</button>
+      <button type="button" class="align-btn" data-align="right" id="align-right" aria-pressed="false">Right Aligned</button>
+    </div>
+
+    <!-- Hidden field to store current alignment value for broadcasting -->
+    <input type="hidden" id="align-value" value="left" />
 
     <div class="button-group">
       <button class="update" id="update-btn">Update</button>
@@ -116,15 +142,36 @@
       const currentAlign = (urlParams.get("align") || "left").toLowerCase();
 
       const tableIdInput = document.getElementById("tableid-input");
-      const alignSelect = document.getElementById("align-select");
+      const alignValueInput = document.getElementById("align-value");
+      const alignButtons = Array.from(document.querySelectorAll(".align-btn"));
+
       tableIdInput.value = currentTableId;
 
-      // Set align select to the current align param if present
-      if (["left","right","center"].includes(currentAlign)) {
-        alignSelect.value = currentAlign;
-      } else {
-        alignSelect.value = "left";
+      // Helper to set selected button visually & for accessibility
+      function setSelectedButton(value) {
+        alignButtons.forEach(btn => {
+          const btnAlign = btn.getAttribute("data-align");
+          const selected = btnAlign === value;
+          btn.classList.toggle("selected", selected);
+          btn.setAttribute("aria-pressed", selected ? "true" : "false");
+        });
+        alignValueInput.value = value;
       }
+
+      // Initialize alignment from URL (default to left)
+      if (["left", "center", "right"].includes(currentAlign)) {
+        setSelectedButton(currentAlign);
+      } else {
+        setSelectedButton("left");
+      }
+
+      // Wire up clicks on alignment buttons
+      alignButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const value = btn.getAttribute("data-align");
+          setSelectedButton(value);
+        });
+      });
 
       // Function to show a bold checkmark on a button
       function showCheckmark(button) {
@@ -159,14 +206,9 @@
       // Update button functionality
       document.getElementById("update-btn").addEventListener("click", () => {
         const newTableId = tableIdInput.value.trim();
-        const selectedAlign = alignSelect.value;
+        const selectedAlign = alignValueInput.value || "left";
 
-        // If the input is empty, treat it as a reset of the tableid but keep alignment
-        if (!newTableId) {
-          resetInput();
-        }
-
-        // Broadcast the updated table ID and alignment
+        // Broadcast the updated table ID and alignment (treat empty as reset)
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: newTableId, align: selectedAlign });
 
@@ -180,7 +222,7 @@
 
         // Broadcast a message with an empty table ID but keep the currently selected alignment
         const channel = new BroadcastChannel("table_config_channel");
-        channel.postMessage({ name, tableid: "", align: alignSelect.value });
+        channel.postMessage({ name, tableid: "", align: alignValueInput.value || "left" });
 
         // Show checkmark on the Reset button
         showCheckmark(document.getElementById("reset-btn"));
