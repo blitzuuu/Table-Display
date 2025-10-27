@@ -169,6 +169,8 @@
       const tableIdInput = document.getElementById("tableid-input");
       const alignValueInput = document.getElementById("align-value");
       const alignButtons = Array.from(document.querySelectorAll(".align-btn"));
+      const updateBtn = document.getElementById("update-btn");
+      const resetBtn = document.getElementById("reset-btn");
 
       tableIdInput.value = currentTableId;
 
@@ -203,15 +205,40 @@
         });
       });
 
+      // Robust showCheckmark: store original HTML, clear previous timeout if any,
+      // and restore original text after 3s. This fixes the issue where the Update
+      // button sometimes remained a checkmark permanently.
       function showCheckmark(button) {
-        const originalText = button.innerHTML;
+        // clear any previously scheduled restore for this button
+        if (button.dataset._checkTimeoutId) {
+          clearTimeout(Number(button.dataset._checkTimeoutId));
+          delete button.dataset._checkTimeoutId;
+        }
+
+        // store original HTML if not already stored
+        if (!button.dataset._originalHtml) {
+          button.dataset._originalHtml = button.innerHTML;
+        }
+
+        // set checkmark
         button.innerHTML = "<b>✔</b>";
-        setTimeout(() => { button.innerHTML = originalText; }, 3000);
+
+        // schedule restore
+        const id = setTimeout(() => {
+          // restore original HTML (fallback to literal "Update"/"Reset" if missing)
+          button.innerHTML = button.dataset._originalHtml || (button.classList.contains('update') ? 'Update' : 'Reset');
+          // clean up dataset keys so future clicks behave the same
+          delete button.dataset._checkTimeoutId;
+          delete button.dataset._originalHtml;
+        }, 3000);
+
+        // save timeout id so we can clear it if the button is clicked again quickly
+        button.dataset._checkTimeoutId = String(id);
       }
 
       function resetInput() { tableIdInput.value = ""; }
 
-      // Validate player_data.json (same behaviour as before)
+      // Fetch/validate player_data.json (unchanged behaviour)
       try {
         const response = await fetch("player_data.json");
         const playerData = await response.json();
@@ -225,19 +252,23 @@
         return;
       }
 
-      document.getElementById("update-btn").addEventListener("click", () => {
+      updateBtn.addEventListener("click", () => {
         const newTableId = tableIdInput.value.trim();
         const selectedAlign = alignValueInput.value || "left";
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: newTableId, align: selectedAlign });
-        showCheckmark(document.getElementById("update-btn"));
+
+        // show checkmark and restore after timeout (robust)
+        showCheckmark(updateBtn);
       });
 
-      document.getElementById("reset-btn").addEventListener("click", () => {
+      resetBtn.addEventListener("click", () => {
         resetInput();
         const channel = new BroadcastChannel("table_config_channel");
         channel.postMessage({ name, tableid: "", align: alignValueInput.value || "left" });
-        showCheckmark(document.getElementById("reset-btn"));
+
+        // show checkmark and restore after timeout (robust)
+        showCheckmark(resetBtn);
       });
     });
   </script>
