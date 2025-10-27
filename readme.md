@@ -1,7 +1,7 @@
 ## A Dynamic MKW Tablebot Table Display for OBS
 To To use this display, insert an MKW Tablebot table ID at the end of this url, replace the "TABLE-ID" text: https://blitzuuu.github.io/Table-Display/index?tableid=TABLE_ID
 
-If you would like your team highlighted add &YOUR_LOUNGE_NAME to the end of the url.
+If you would like your team highlighted add &name=YOUR_LOUNGE_NAME to the end of the url.
 For example, a url using my name would look something like this https://blitzuuu.github.io/Table-Display/index?tableid=1364434792455868426&name=blitzu
 
 Add this link as a browser source in OBS to display the scores, they update as the table is updated with no need to refresh.
