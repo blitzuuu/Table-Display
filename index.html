@@ -211,10 +211,32 @@
             if (!parsed || parsed.type !== 'teams' || parsed.teams.length !== 2) return;
 
             // helper to test if a team contains the player (case-insensitive)
-            function teamMatchesPlayer(team, playerName) {
+            function teamHasPlayer(team, playerName) {
                 if (!playerName) return false;
                 const lower = playerName.toLowerCase();
                 return Array.isArray(team.players) && team.players.some(p => p.toLowerCase() === lower);
+            }
+
+            const teamA = parsed.teams[0];
+            const teamB = parsed.teams[1];
+
+            // Decide left/right team:
+            // - If exactly one team contains the set player -> that team on the left.
+            // - Otherwise -> left = first team alphabetically (by team.name, case-insensitive).
+            let leftTeam, rightTeam;
+            const aHas = teamHasPlayer(teamA, playerName);
+            const bHas = teamHasPlayer(teamB, playerName);
+
+            if (aHas && !bHas) {
+                leftTeam = teamA; rightTeam = teamB;
+            } else if (bHas && !aHas) {
+                leftTeam = teamB; rightTeam = teamA;
+            } else {
+                // alphabetical by name (case-insensitive)
+                const aName = (teamA.name || "").toLowerCase();
+                const bName = (teamB.name || "").toLowerCase();
+                if (aName.localeCompare(bName) <= 0) { leftTeam = teamA; rightTeam = teamB; }
+                else { leftTeam = teamB; rightTeam = teamA; }
             }
 
             // Measure monospace character width at the container font-size.
@@ -234,17 +256,17 @@
 
             const padding = Math.max(4, Math.round(charWidth * 0.6));
 
-            const tag1 = formatTag(parsed.teams[0].name);
-            const tag2 = formatTag(parsed.teams[1].name);
-            const score1 = parsed.teams[0].score;
-            const score2 = parsed.teams[1].score;
+            const tagLeft = formatTag(leftTeam.name);
+            const tagRight = formatTag(rightTeam.name);
+            const scoreLeft = leftTeam.score;
+            const scoreRight = rightTeam.score;
             // Race label now contains only the race count (format removed)
             const raceLabel = `R${parsed.raceNumber}`;
 
             // Compute widths in px
-            const lenTag1 = tag1.length;
-            const lenTag2 = tag2.length;
-            const boxAChars = Math.max(lenTag1, lenTag2); // Box A: width based on larger tag
+            const lenTagLeft = tagLeft.length;
+            const lenTagRight = tagRight.length;
+            const boxAChars = Math.max(lenTagLeft, lenTagRight); // Box A: width based on larger tag
             const boxAWidth = Math.ceil(boxAChars * charWidth) + padding * 2;
 
             const boxBChars = 3; // 3 character widths
@@ -258,18 +280,15 @@
             wrapper.className = 'war-center';
             wrapper.style.gap = Math.round(charWidth * 1.2) + 'px';
 
-            // Determine highlight classes based on player membership
-            const leftIsMatch = teamMatchesPlayer(parsed.teams[0], playerName);
-            const rightIsMatch = teamMatchesPlayer(parsed.teams[1], playerName);
-
+            // All centered-format text uses text-normal (no highlighting)
             // Left Tag (Box A) - left aligned text inside
             const leftTagBox = document.createElement('div');
             leftTagBox.className = 'war-box tag';
             leftTagBox.style.width = boxAWidth + 'px';
             leftTagBox.style.textAlign = 'left';
             const leftTagSpan = document.createElement('span');
-            leftTagSpan.className = (leftIsMatch ? 'text-highlight' : 'text-normal') + ' left-align';
-            leftTagSpan.textContent = tag1;
+            leftTagSpan.className = 'text-normal left-align';
+            leftTagSpan.textContent = tagLeft;
             leftTagBox.appendChild(leftTagSpan);
 
             // Left Score (Box B) - left aligned
@@ -278,8 +297,8 @@
             leftScoreBox.style.width = boxBWidth + 'px';
             leftScoreBox.style.textAlign = 'left';
             const leftScoreSpan = document.createElement('span');
-            leftScoreSpan.className = (leftIsMatch ? 'text-highlight' : 'text-normal') + ' left-align';
-            leftScoreSpan.textContent = score1;
+            leftScoreSpan.className = 'text-normal left-align';
+            leftScoreSpan.textContent = scoreLeft;
             leftScoreBox.appendChild(leftScoreSpan);
 
             // Race Count (Box C) - smaller font, center aligned, bottom aligned with other text
@@ -303,8 +322,8 @@
             rightScoreBox.style.width = boxBWidth + 'px';
             rightScoreBox.style.textAlign = 'right';
             const rightScoreSpan = document.createElement('span');
-            rightScoreSpan.className = (rightIsMatch ? 'text-highlight' : 'text-normal') + ' right-align';
-            rightScoreSpan.textContent = score2;
+            rightScoreSpan.className = 'text-normal right-align';
+            rightScoreSpan.textContent = scoreRight;
             rightScoreBox.appendChild(rightScoreSpan);
 
             // Right Tag (Box A) - right aligned
@@ -313,8 +332,8 @@
             rightTagBox.style.width = boxAWidth + 'px';
             rightTagBox.style.textAlign = 'right';
             const rightTagSpan = document.createElement('span');
-            rightTagSpan.className = (rightIsMatch ? 'text-highlight' : 'text-normal') + ' right-align';
-            rightTagSpan.textContent = tag2;
+            rightTagSpan.className = 'text-normal right-align';
+            rightTagSpan.textContent = tagRight;
             rightTagBox.appendChild(rightTagSpan);
 
             // Append in order: leftTag, leftScore, race, rightScore, rightTag
