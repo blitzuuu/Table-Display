@@ -30,7 +30,7 @@
       color: white;
     }
 
-    /* Keep the Table ID field sizing exactly as before */
+    /* Table ID field - restored sizing */
     .config-container input {
       width: calc(100% - 20px); /* matches original layout */
       padding: 10px;
@@ -48,7 +48,7 @@
       outline: none;
     }
 
-    /* Alignment button group uses the same width as the text field and same visual color */
+    /* Alignment button group uses same total width as the text field and button-group */
     .align-group {
       width: calc(100% - 20px); /* same as input */
       display: flex;
@@ -57,19 +57,28 @@
       box-sizing: content-box;
     }
 
+    /* Each button shares available space (three equal parts).
+       Use normal wrapping so longer labels fit inside and remain readable.
+       Slightly smaller font + balanced padding to ensure labels fit without clipping. */
     .align-group .align-btn {
       flex: 1;
       background-color: #d3d3d3; /* same as text field */
       color: #000;
       border: none;
       border-radius: 5px;
-      padding: 8px 10px;
-      font-size: 14px;
+      padding: 6px 8px;
+      font-size: 13px;
       cursor: pointer;
       height: 36px;
-      line-height: 1.2;
+      line-height: 1.1;
       box-sizing: border-box;
+      text-align: center;
+      white-space: normal; /* allow wrapping */
+      word-break: break-word;
       transition: background-color 0.12s ease, color 0.12s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .align-group .align-btn:focus {
@@ -79,7 +88,7 @@
 
     /* Selected state: invert to blue background and white text */
     .align-group .align-btn.selected {
-      background-color: #0d6efd; /* bootstrap primary blue (inverted) */
+      background-color: #0d6efd; /* blue */
       color: #fff;
     }
 
@@ -107,9 +116,6 @@
       display: flex;
       justify-content: space-between;
     }
-
-    /* Small responsive tweak so long labels don't overflow the button */
-    .align-group .align-btn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   </style>
 </head>
 <body>
@@ -120,9 +126,9 @@
     <label for="align-select">Text Alignment</label>
     <!-- alignment buttons: same width as text field, three equal buttons inside -->
     <div class="align-group" role="radiogroup" aria-label="Text Alignment">
-      <button type="button" class="align-btn" data-align="left" id="align-left" aria-pressed="true">Left Aligned</button>
+      <button type="button" class="align-btn" data-align="left" id="align-left" aria-pressed="true">Left</button>
       <button type="button" class="align-btn" data-align="center" id="align-center" aria-pressed="false">Centered (War)</button>
-      <button type="button" class="align-btn" data-align="right" id="align-right" aria-pressed="false">Right Aligned</button>
+      <button type="button" class="align-btn" data-align="right" id="align-right" aria-pressed="false">Right</button>
     </div>
 
     <!-- Hidden field to store current alignment value for broadcasting -->
