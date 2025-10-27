@@ -8,6 +8,21 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --container-width: 300px;
+      --container-padding: 20px;
+      --field-gap: 15px;
+      --control-height: 35px; /* unified control height for input & buttons */
+      --field-bg: #d3d3d3;
+      --selected-bg: #0d6efd;
+      --selected-color: #fff;
+      --text-color: #000;
+      --font-size: 14px;
+      --btn-font-size: 14px;
+      --align-btn-font-size: 13px;
+      --gap-between-align-buttons: 8px;
+    }
+
     body {
       font-family: 'Inter', sans-serif;
       margin: 0;
@@ -19,66 +34,72 @@
       height: 100vh;
     }
     .config-container {
-      width: 300px;
-      padding: 20px;
+      width: var(--container-width);
+      padding: var(--container-padding);
       position: relative;
+      box-sizing: border-box;
     }
     .config-container label {
       display: block;
-      font-size: 14px;
+      font-size: var(--font-size);
       margin-bottom: 5px;
       color: white;
     }
 
-    /* Table ID field - restored sizing */
+    /* Make inputs and buttons use border-box so widths/heights are stable across browsers */
+    .config-container input,
+    .config-container .align-group,
+    .config-container .button-group {
+      box-sizing: border-box;
+    }
+
+    /* Table ID field - same overall width as the button group (two 48% buttons) */
     .config-container input {
-      width: calc(100% - 20px); /* matches original layout */
-      padding: 10px;
-      margin-bottom: 15px;
+      width: calc(100% - 20px); /* preserves previous visual alignment */
+      padding: 8px 10px;
+      margin-bottom: var(--field-gap);
       border: none;
       border-radius: 5px;
-      background-color: #d3d3d3; /* Lighter grey for input */
-      color: #000;
-      box-sizing: content-box;
-      font-size: 14px;
-      height: 36px;
-      line-height: 1.2;
+      background-color: var(--field-bg);
+      color: var(--text-color);
+      font-size: var(--font-size);
+      height: var(--control-height); /* same height as update/reset buttons */
+      line-height: 1.1;
+      box-sizing: content-box; /* keep the calc(100% - 20px) behavior used before */
     }
     .config-container input:focus {
       outline: none;
     }
 
-    /* Alignment button group uses same total width as the text field and button-group */
+    /* Alignment button group uses the same TOTAL width as input & button group */
     .align-group {
-      width: calc(100% - 20px); /* same as input */
+      width: calc(100% - 20px); /* same visual width as input */
       display: flex;
-      gap: 8px;
-      margin-bottom: 15px; /* equal spacing to match other fields */
+      gap: var(--gap-between-align-buttons);
+      margin-bottom: var(--field-gap);
       box-sizing: content-box;
     }
 
-    /* Each button shares available space (three equal parts).
-       Use normal wrapping so longer labels fit inside and remain readable.
-       Slightly smaller font + balanced padding to ensure labels fit without clipping. */
+    /* Each align button stretches equally to fill the align-group.
+       Use display:flex with center alignment so wrapped text stays vertically centered. */
     .align-group .align-btn {
-      flex: 1;
-      background-color: #d3d3d3; /* same as text field */
-      color: #000;
+      flex: 1 1 0;
+      background-color: var(--field-bg);
+      color: var(--text-color);
       border: none;
       border-radius: 5px;
       padding: 6px 8px;
-      font-size: 13px;
+      font-size: var(--align-btn-font-size);
       cursor: pointer;
-      height: 36px;
-      line-height: 1.1;
+      height: var(--control-height); /* matches input & update/reset buttons */
+      line-height: 1.05;
       box-sizing: border-box;
       text-align: center;
-      white-space: normal; /* allow wrapping */
-      word-break: break-word;
-      transition: background-color 0.12s ease, color 0.12s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      white-space: normal;         /* allow wrapping if needed */
+      word-break: break-word;      /* break long words if necessary */
     }
 
     .align-group .align-btn:focus {
@@ -88,20 +109,22 @@
 
     /* Selected state: invert to blue background and white text */
     .align-group .align-btn.selected {
-      background-color: #0d6efd; /* blue */
-      color: #fff;
+      background-color: var(--selected-bg);
+      color: var(--selected-color);
     }
 
+    /* update/reset buttons keep previous visual style and widths */
     .config-container button {
       width: 48%;
-      padding: 10px;
-      font-size: 14px;
+      padding: 8px 10px;
+      font-size: var(--btn-font-size);
       border: none;
       cursor: pointer;
       border-radius: 5px;
       color: white;
-      height: 35px;
+      height: var(--control-height); /* unify height across all controls */
       opacity: 0.9;
+      box-sizing: border-box;
     }
     .config-container button.update {
       background-color: #5cb85c; /* Muted green for update */
@@ -116,6 +139,18 @@
       display: flex;
       justify-content: space-between;
     }
+
+    /* ensure long labels fit by allowing two-line wrapping on the center button */
+    .align-group .align-btn span {
+      display: inline-block;
+      padding: 0 2px;
+      line-height: 1.05;
+    }
+
+    /* Accessibility: make the radiogroup visually consistent on reduced widths */
+    @media (max-width: 360px) {
+      :root { --container-width: 92vw; }
+    }
   </style>
 </head>
 <body>
@@ -124,11 +159,11 @@
     <input type="text" id="tableid-input" placeholder="Enter Table ID" />
 
     <label for="align-select">Text Alignment</label>
-    <!-- alignment buttons: same width as text field, three equal buttons inside -->
+    <!-- alignment buttons: same total width as the text field and update/reset group -->
     <div class="align-group" role="radiogroup" aria-label="Text Alignment">
-      <button type="button" class="align-btn" data-align="left" id="align-left" aria-pressed="true">Left</button>
-      <button type="button" class="align-btn" data-align="center" id="align-center" aria-pressed="false">Centered (War)</button>
-      <button type="button" class="align-btn" data-align="right" id="align-right" aria-pressed="false">Right</button>
+      <button type="button" class="align-btn" data-align="left" id="align-left" aria-pressed="true"><span>Left</span></button>
+      <button type="button" class="align-btn" data-align="center" id="align-center" aria-pressed="false"><span>Centered (War)</span></button>
+      <button type="button" class="align-btn" data-align="right" id="align-right" aria-pressed="false"><span>Right</span></button>
     </div>
 
     <!-- Hidden field to store current alignment value for broadcasting -->
@@ -176,6 +211,16 @@
         btn.addEventListener("click", () => {
           const value = btn.getAttribute("data-align");
           setSelectedButton(value);
+        });
+
+        // keyboard support: space/enter toggle
+        btn.addEventListener("keydown", (e) => {
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            const value = btn.getAttribute("data-align");
+            setSelectedButton(value);
+            btn.focus();
+          }
         });
       });
 
