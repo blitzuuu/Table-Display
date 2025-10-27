@@ -29,22 +29,34 @@
       margin-bottom: 5px;
       color: white;
     }
+
+    /* Restore the original Table ID field width calculation and make the select match it exactly.
+       Keep calc(100% - 20px) so the inputs line up exactly with the button group which uses the container padding.
+       Use box-sizing: border-box and a slightly larger min-height + line-height so low-hanging characters (g, y, j, p, q) are not clipped. */
     .config-container input,
     .config-container select {
-      width: calc(100% - 20px); /* Matches the alignment of buttons with padding */
+      width: calc(100% - 20px); /* match original behavior */
       padding: 10px;
       margin-bottom: 15px; /* equal spacing between elements */
       border: none;
       border-radius: 5px;
       background-color: #d3d3d3; /* Lighter grey for input */
       color: #000; /* Black text for better contrast */
-      height: 35px; /* consistent height for inputs/select */
+      min-height: 40px; /* slightly taller to avoid clipping of descenders */
+      line-height: 1.2;  /* prevent clipping of low-hanging text */
       box-sizing: border-box;
+      font-size: 14px; /* consistent font sizing */
     }
     .config-container input:focus,
     .config-container select:focus {
       outline: none;
     }
+    /* Some browsers render select arrows inside the padding; keep appearance but ensure no clipping */
+    .config-container select {
+      -webkit-appearance: menulist-button;
+      -moz-appearance: menulist-button;
+    }
+
     .config-container button {
       width: 48%;
       padding: 10px;
@@ -53,7 +65,7 @@
       cursor: pointer;
       border-radius: 5px;
       color: white;
-      height: 35px; /* Same height as the input field */
+      height: 35px; /* Same height as the input field used previously */
       opacity: 0.9; /* Slightly muted button appearance */
     }
     .config-container button.update {
@@ -170,4 +182,3 @@
   </script>
 </body>
 </html>
-```
