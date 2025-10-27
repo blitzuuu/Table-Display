@@ -30,31 +30,38 @@
       color: white;
     }
 
-    /* Restore the original Table ID field width calculation and make the select match it exactly.
-       Keep calc(100% - 20px) so the inputs line up exactly with the button group which uses the container padding.
-       Use box-sizing: border-box and a slightly larger min-height + line-height so low-hanging characters (g, y, j, p, q) are not clipped. */
+    /* Restore original width behavior so inputs align with the button group.
+       Use the same calculation for both input and select so they match exactly. */
     .config-container input,
     .config-container select {
-      width: calc(100% - 20px); /* match original behavior */
+      width: calc(100% - 20px); /* matches original layout */
       padding: 10px;
       margin-bottom: 15px; /* equal spacing between elements */
       border: none;
       border-radius: 5px;
       background-color: #d3d3d3; /* Lighter grey for input */
       color: #000; /* Black text for better contrast */
-      min-height: 40px; /* slightly taller to avoid clipping of descenders */
-      line-height: 1.2;  /* prevent clipping of low-hanging text */
-      box-sizing: border-box;
-      font-size: 14px; /* consistent font sizing */
+      box-sizing: content-box; /* keep calc sizing behavior consistent with original */
+      font-size: 14px;
     }
+
+    /* Prevent descenders from being clipped inside the select across browsers */
+    .config-container select {
+      /* set a fixed height that matches the previous height of the input area
+         but keep padding/line-height so characters aren't clipped */
+      height: 36px;
+      line-height: 1.2;
+      -webkit-appearance: menulist-button;
+      -moz-appearance: menulist-button;
+      appearance: menulist-button;
+      /* ensure the internal content has enough space */
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+
     .config-container input:focus,
     .config-container select:focus {
       outline: none;
-    }
-    /* Some browsers render select arrows inside the padding; keep appearance but ensure no clipping */
-    .config-container select {
-      -webkit-appearance: menulist-button;
-      -moz-appearance: menulist-button;
     }
 
     .config-container button {
@@ -65,7 +72,7 @@
       cursor: pointer;
       border-radius: 5px;
       color: white;
-      height: 35px; /* Same height as the input field used previously */
+      height: 35px; /* Same height as before */
       opacity: 0.9; /* Slightly muted button appearance */
     }
     .config-container button.update {
