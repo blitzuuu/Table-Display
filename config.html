@@ -29,16 +29,20 @@
       margin-bottom: 5px;
       color: white;
     }
-    .config-container input {
+    .config-container input,
+    .config-container select {
       width: calc(100% - 20px); /* Matches the alignment of buttons with padding */
       padding: 10px;
-      margin-bottom: 15px;
+      margin-bottom: 15px; /* equal spacing between elements */
       border: none;
       border-radius: 5px;
       background-color: #d3d3d3; /* Lighter grey for input */
       color: #000; /* Black text for better contrast */
+      height: 35px; /* consistent height for inputs/select */
+      box-sizing: border-box;
     }
-    .config-container input:focus {
+    .config-container input:focus,
+    .config-container select:focus {
       outline: none;
     }
     .config-container button {
@@ -71,6 +75,14 @@
   <div class="config-container">
     <label for="tableid-input">Table ID</label>
     <input type="text" id="tableid-input" placeholder="Enter Table ID" />
+
+    <label for="align-select">Text Alignment</label>
+    <select id="align-select" aria-label="Text Alignment">
+      <option value="left">Left-Aligned</option>
+      <option value="right">Right-Aligned</option>
+      <option value="center">Centered (Two Teams Only)</option>
+    </select>
+
     <div class="button-group">
       <button class="update" id="update-btn">Update</button>
       <button class="reset" id="reset-btn">Reset</button>
@@ -82,9 +94,18 @@
       const urlParams = new URLSearchParams(window.location.search);
       const name = urlParams.get("name");
       const currentTableId = urlParams.get("tableid") || "";
+      const currentAlign = (urlParams.get("align") || "left").toLowerCase();
 
       const tableIdInput = document.getElementById("tableid-input");
+      const alignSelect = document.getElementById("align-select");
       tableIdInput.value = currentTableId;
+
+      // Set align select to the current align param if present
+      if (["left","right","center"].includes(currentAlign)) {
+        alignSelect.value = currentAlign;
+      } else {
+        alignSelect.value = "left";
+      }
 
       // Function to show a bold checkmark on a button
       function showCheckmark(button) {
@@ -119,15 +140,16 @@
       // Update button functionality
       document.getElementById("update-btn").addEventListener("click", () => {
         const newTableId = tableIdInput.value.trim();
+        const selectedAlign = alignSelect.value;
 
-        // If the input is empty, treat it as a reset
+        // If the input is empty, treat it as a reset of the tableid but keep alignment
         if (!newTableId) {
           resetInput();
-        } else {
-          // Broadcast the updated table ID
-          const channel = new BroadcastChannel("table_config_channel");
-          channel.postMessage({ name, tableid: newTableId });
         }
+
+        // Broadcast the updated table ID and alignment
+        const channel = new BroadcastChannel("table_config_channel");
+        channel.postMessage({ name, tableid: newTableId, align: selectedAlign });
 
         // Show checkmark on the Update button
         showCheckmark(document.getElementById("update-btn"));
@@ -137,9 +159,9 @@
       document.getElementById("reset-btn").addEventListener("click", () => {
         resetInput();
 
-        // Broadcast a message with an empty table ID
+        // Broadcast a message with an empty table ID but keep the currently selected alignment
         const channel = new BroadcastChannel("table_config_channel");
-        channel.postMessage({ name, tableid: "" });
+        channel.postMessage({ name, tableid: "", align: alignSelect.value });
 
         // Show checkmark on the Reset button
         showCheckmark(document.getElementById("reset-btn"));
@@ -148,3 +170,4 @@
   </script>
 </body>
 </html>
+```
