@@ -21,10 +21,26 @@
             font-weight: 500;
             box-sizing: border-box;
             padding: 0 10px;
-            /* remove nowrap so flex/blocks can layout correctly for the war center */
+            /* allow normal wrapping/layout for war-center */
             white-space: normal;
             overflow: visible;
         }
+
+        /* Default styling for text (dark grey text, black highlight) */
+        .dark-mode .text-highlight {
+            color: black; /* Highlighted text (e.g., player's score) */
+        }
+        .dark-mode .text-normal {
+            color: #444444; /* Dark grey text for other elements */
+        }
+        /* Styling for &white parameter (light grey text, white highlight) */
+        .white-mode .text-highlight {
+            color: white; /* Highlighted text (e.g., player's score) */
+        }
+        .white-mode .text-normal {
+            color: #bebebe; /* Light grey text for other elements */
+        }
+
         /* Flex container used for centered war layout */
         .war-center {
             display: flex;
@@ -59,7 +75,6 @@
         }
 
         .war-box.race .text { /* Box C styling: slightly smaller */
-            font-size: 0.75em;
             font-weight: 700;
             line-height: 1;
         }
@@ -68,20 +83,6 @@
         .left-align { text-align: left; width: 100%; padding-left: 6px; box-sizing: border-box; }
         .right-align { text-align: right; width: 100%; padding-right: 6px; box-sizing: border-box; }
         .center-align { text-align: center; width: 100%; box-sizing: border-box; }
-
-        /* Styling for dark/white modes (keep existing behavior) */
-        .dark-mode .text-highlight {
-            color: black;
-        }
-        .dark-mode .text-normal {
-            color: #444444;
-        }
-        .white-mode .text-highlight {
-            color: white;
-        }
-        .white-mode .text-normal {
-            color: #bebebe;
-        }
     </style>
 </head>
 <body>
@@ -125,7 +126,7 @@
                 const tableHTML = await tableResponse.text();
                 const parsed = parseTableData(tableHTML, playerName);
 
-                // compute effectiveAlign robustly: only allow 'center' when parsed.type === 'teams' and exactly 2 teams
+                // compute effectiveAlign: allow center only when teams length === 2
                 let effectiveAlign;
                 if (align === 'center') {
                     if (parsed && parsed.type === 'teams' && Array.isArray(parsed.teams) && parsed.teams.length === 2) {
@@ -139,10 +140,7 @@
                     effectiveAlign = 'left';
                 }
 
-                // debug logging to help track why center might not be selected (remove in production)
-                console.debug('fetchAndRenderData', { tableId, align, effectiveAlign, parsed });
-
-                render(parsed, effectiveAlign);
+                render(parsed, effectiveAlign, playerName);
             } catch (error) {
                 console.error("Error fetching or rendering data:", error);
                 document.getElementById("table-stats").innerHTML = "";
@@ -181,47 +179,45 @@
         }
 
         // Render structured data according to effectiveAlign ('left'|'right'|'center')
-        function render(parsed, effectiveAlign) {
+        function render(parsed, effectiveAlign, playerName) {
             const container = document.getElementById("table-stats");
             container.innerHTML = "";
 
-            if (!parsed) {
-                console.warn('render: parsed is falsy');
-                return;
-            }
+            if (!parsed) return;
 
             if (parsed.type === 'ffa') {
-                // same rendering as before for FFA
+                // FFA rendering: show race number only (format text removed)
                 const playerScores = parsed.players.map(p => `<span class="text-normal">${p.total}</span>`);
-                container.innerHTML = `<span class="text-normal">R${parsed.raceNumber} ${parsed.format}</span> <span class="text-normal">|</span> ${playerScores.join('<span class="text-normal">, </span>')}`;
+                container.innerHTML = `<span class="text-normal">R${parsed.raceNumber}</span> <span class="text-normal">|</span> ${playerScores.join('<span class="text-normal">, </span>')}`;
                 container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
                 return;
             }
 
             // Teams rendering
             if (effectiveAlign === 'center' && parsed.type === 'teams' && parsed.teams.length === 2) {
-                renderWarCenter(container, parsed);
+                renderWarCenter(container, parsed, playerName);
                 return;
             }
 
-            // Default teams rendering (left/right/center simple join)
+            // Default teams rendering (left/right/center simple join) - format text removed
             const teamScoresHtml = parsed.teams.map(team => `<span class="text-normal">${formatTag(team.name)} ${team.score}</span>`);
-            container.innerHTML = `<span class="text-normal">R${parsed.raceNumber} ${parsed.format}</span> <span class="text-normal">|</span> ${teamScoresHtml.join('<span class="text-normal"> | </span>')}`;
+            container.innerHTML = `<span class="text-normal">R${parsed.raceNumber}</span> <span class="text-normal">|</span> ${teamScoresHtml.join('<span class="text-normal"> | </span>')}`;
             container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
         }
 
         // Build the special "Centered (War)" layout in DOM (not plain HTML string)
-        function renderWarCenter(container, parsed) {
+        function renderWarCenter(container, parsed, playerName) {
             // Safety checks
-            if (!parsed || parsed.type !== 'teams' || parsed.teams.length !== 2) {
-                console.warn('renderWarCenter called with invalid parsed data', parsed);
-                return;
+            if (!parsed || parsed.type !== 'teams' || parsed.teams.length !== 2) return;
+
+            // helper to test if a team contains the player (case-insensitive)
+            function teamMatchesPlayer(team, playerName) {
+                if (!playerName) return false;
+                const lower = playerName.toLowerCase();
+                return Array.isArray(team.players) && team.players.some(p => p.toLowerCase() === lower);
             }
 
-            // container: #table-stats
-            // parsed.teams: [{name, score}, {name, score}]
-            // We need to measure monospace character width at the container font-size.
-            // Create an offscreen span to measure a character in same font.
+            // Measure monospace character width at the container font-size.
             const meas = document.createElement('span');
             meas.style.position = 'absolute';
             meas.style.left = '-9999px';
@@ -230,19 +226,20 @@
             meas.style.fontFamily = getComputedStyle(container).fontFamily || 'Roboto Mono, monospace';
             meas.style.fontSize = getComputedStyle(container).fontSize || '30px';
             meas.style.fontWeight = getComputedStyle(container).fontWeight || '500';
-            meas.textContent = '0'.repeat(80); // long string for accurate measurement
+            meas.textContent = '0'.repeat(80);
             document.body.appendChild(meas);
             const totalWidth = meas.getBoundingClientRect().width || 1;
             const charWidth = totalWidth / 80;
             document.body.removeChild(meas);
 
-            const padding = Math.max(4, Math.round(charWidth * 0.6)); // a little padding inside boxes
+            const padding = Math.max(4, Math.round(charWidth * 0.6));
 
             const tag1 = formatTag(parsed.teams[0].name);
             const tag2 = formatTag(parsed.teams[1].name);
             const score1 = parsed.teams[0].score;
             const score2 = parsed.teams[1].score;
-            const raceLabel = `R${parsed.raceNumber} ${parsed.format}`;
+            // Race label now contains only the race count (format removed)
+            const raceLabel = `R${parsed.raceNumber}`;
 
             // Compute widths in px
             const lenTag1 = tag1.length;
@@ -261,13 +258,17 @@
             wrapper.className = 'war-center';
             wrapper.style.gap = Math.round(charWidth * 1.2) + 'px';
 
+            // Determine highlight classes based on player membership
+            const leftIsMatch = teamMatchesPlayer(parsed.teams[0], playerName);
+            const rightIsMatch = teamMatchesPlayer(parsed.teams[1], playerName);
+
             // Left Tag (Box A) - left aligned text inside
             const leftTagBox = document.createElement('div');
             leftTagBox.className = 'war-box tag';
             leftTagBox.style.width = boxAWidth + 'px';
             leftTagBox.style.textAlign = 'left';
             const leftTagSpan = document.createElement('span');
-            leftTagSpan.className = 'text left-align';
+            leftTagSpan.className = (leftIsMatch ? 'text-highlight' : 'text-normal') + ' left-align';
             leftTagSpan.textContent = tag1;
             leftTagBox.appendChild(leftTagSpan);
 
@@ -277,7 +278,7 @@
             leftScoreBox.style.width = boxBWidth + 'px';
             leftScoreBox.style.textAlign = 'left';
             const leftScoreSpan = document.createElement('span');
-            leftScoreSpan.className = 'text left-align';
+            leftScoreSpan.className = (leftIsMatch ? 'text-highlight' : 'text-normal') + ' left-align';
             leftScoreSpan.textContent = score1;
             leftScoreBox.appendChild(leftScoreSpan);
 
@@ -287,7 +288,7 @@
             raceBox.style.width = boxCWidth + 'px';
             raceBox.style.textAlign = 'center';
             const raceSpan = document.createElement('span');
-            raceSpan.className = 'text center-align';
+            raceSpan.className = 'text-normal center-align';
             raceSpan.textContent = raceLabel;
             // Make race label smaller visually
             raceSpan.style.fontSize = '0.6em';
@@ -302,7 +303,7 @@
             rightScoreBox.style.width = boxBWidth + 'px';
             rightScoreBox.style.textAlign = 'right';
             const rightScoreSpan = document.createElement('span');
-            rightScoreSpan.className = 'text right-align';
+            rightScoreSpan.className = (rightIsMatch ? 'text-highlight' : 'text-normal') + ' right-align';
             rightScoreSpan.textContent = score2;
             rightScoreBox.appendChild(rightScoreSpan);
 
@@ -312,7 +313,7 @@
             rightTagBox.style.width = boxAWidth + 'px';
             rightTagBox.style.textAlign = 'right';
             const rightTagSpan = document.createElement('span');
-            rightTagSpan.className = 'text right-align';
+            rightTagSpan.className = (rightIsMatch ? 'text-highlight' : 'text-normal') + ' right-align';
             rightTagSpan.textContent = tag2;
             rightTagBox.appendChild(rightTagSpan);
 
@@ -323,11 +324,11 @@
             wrapper.appendChild(rightScoreBox);
             wrapper.appendChild(rightTagBox);
 
-            // ensure container is empty then append
+            // clear container and append
             container.innerHTML = '';
             container.appendChild(wrapper);
 
-            // make sure container has center text alignment
+            // center the overall container
             container.style.textAlign = 'center';
         }
 
