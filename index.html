@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Table Display</title>
     <style>
         /* Prevent any scrollbars from appearing in the overlay */
@@ -64,7 +64,14 @@
             padding: 0; /* no inner padding so children backgrounds touch the outer border */
             background: transparent;
             box-sizing: border-box;
-            overflow: hidden; /* ensures children backgrounds are clipped to rounded corners */
+            overflow: visible; /* ensures children backgrounds are clipped to rounded corners */
+            will-change: transform;
+        }
+
+        /* scaled variant: increase the visual size of the centered war layout by 50% */
+        .war-center.scaled {
+            transform: scale(1.5);
+            transform-origin: center center;
         }
 
         /* Box styles */
@@ -352,7 +359,8 @@
 
             // Teams rendering
             if (effectiveAlign === 'center' && parsed.type === 'teams' && parsed.teams.length === 2) {
-                // Do not modify centered war layout behavior — keep it as-is
+                // Do not modify centered war layout behavior — keep it as-is in terms of layout logic,
+                // but scale the wrapper for a 50% upscale visually (done via CSS .war-center.scaled).
                 renderWarCenter(container, parsed, playerName);
                 return;
             }
@@ -444,7 +452,8 @@
 
             // Build DOM nodes
             const wrapper = document.createElement('div');
-            wrapper.className = 'war-center';
+            // apply the scaled class so the centered war layout is visually upscaled by ~50%
+            wrapper.className = 'war-center scaled';
 
             // Left Tag (Box A) - left aligned text inside
             const leftTagBox = document.createElement('div');
@@ -507,8 +516,9 @@
             container.innerHTML = '';
             container.appendChild(wrapper);
 
-            // ensure the table-stats container centers the inline-flex wrapper
+            // ensure the table-stats container centers the inline-flex wrapper and allows overflow for scaled content
             container.style.textAlign = 'center';
+            container.style.overflow = 'visible';
         }
 
         // Listen for config changes
