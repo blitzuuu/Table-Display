@@ -22,7 +22,7 @@
         /* Make the element exactly 1920px wide so OBS doesn't need adjustments */
         #table-stats {
             position: absolute;
-            top: 0; /* moved to 0 so the scoreboard sits flush with the top of the page */
+            top: 10px; /* default offset — non-centered alignments keep a 10px gap from top */
             left: 0; /* anchor to left to match a 1920px wide element */
             width: 1920px;
             font-size: 30px; /* Base font size */
@@ -348,13 +348,16 @@
                 });
                 container.innerHTML = `<span class="text-normal">R${parsed.raceNumber}</span> <span class="text-normal">|</span> ${playerScores.join('<span class="text-normal">, </span>')}`;
                 container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
+                // non-centered outputs should keep default top gap
+                container.style.top = '10px';
                 return;
             }
 
             // Teams rendering
             if (effectiveAlign === 'center' && parsed.type === 'teams' && parsed.teams.length === 2) {
-                // Centered war layout uses renderWarCenter (which sizes boxes directly to avoid seams)
+                // Do not modify centered war layout behavior in logic, but make it flush to the top visually
                 renderWarCenter(container, parsed, playerName);
+                // renderWarCenter sets container.style.top = '0'
                 return;
             }
 
@@ -368,6 +371,8 @@
             container.innerHTML = `<span class="text-normal">R${parsed.raceNumber}</span> <span class="text-normal">|</span> ${teamParts.join('<span class="text-normal"> | </span>')}`;
 
             container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
+            // keep default top gap for non-centered layouts
+            container.style.top = '10px';
         }
 
         // Build the special "Centered (War)" layout in DOM (not plain HTML string)
@@ -406,8 +411,8 @@
 
             // We'll scale the centered layout by a scale factor by computing sizes directly,
             // instead of using CSS transform, to avoid subpixel gaps between flex children.
-            // Previous SCALE was 2.25; user requested ~10% smaller -> apply 0.9 multiplier.
-            const SCALE = 2.25 * 0.9; // = 2.025
+            // Current SCALE used previously: 2.025
+            const SCALE = 2.025;
 
             // Measure monospace character width at the container font-size.
             const meas = document.createElement('span');
@@ -545,6 +550,8 @@
 
             // ensure the table-stats container centers the inline-flex wrapper and allows overflow for larger content
             container.style.textAlign = 'center';
+            // make centered layout flush with the top of the page
+            container.style.top = '0';
             container.style.overflow = 'visible';
         }
 
