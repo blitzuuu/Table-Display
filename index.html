@@ -65,13 +65,7 @@
             background: transparent;
             box-sizing: border-box;
             overflow: visible; /* ensures children backgrounds are clipped to rounded corners */
-            will-change: transform;
-        }
-
-        /* scaled variant: increase the visual size of the centered war layout by 50% */
-        .war-center.scaled {
-            transform: scale(1.5);
-            transform-origin: center center;
+            will-change: width, height, transform;
         }
 
         /* Box styles */
@@ -359,8 +353,7 @@
 
             // Teams rendering
             if (effectiveAlign === 'center' && parsed.type === 'teams' && parsed.teams.length === 2) {
-                // Do not modify centered war layout behavior — keep it as-is in terms of layout logic,
-                // but scale the wrapper for a 50% upscale visually (done via CSS .war-center.scaled).
+                // Centered war layout uses renderWarCenter (which now sizes boxes directly instead of CSS transform)
                 renderWarCenter(container, parsed, playerName);
                 return;
             }
@@ -411,6 +404,10 @@
                 else { leftTeam = teamB; rightTeam = teamA; }
             }
 
+            // We'll scale the centered layout by a scale factor by computing sizes directly,
+            // instead of using CSS transform, to avoid subpixel gaps between flex children.
+            const SCALE = 2.25; // previous scale was 1.5 — "another 50% bigger" -> 1.5 * 1.5 = 2.25
+
             // Measure monospace character width at the container font-size.
             const meas = document.createElement('span');
             meas.style.position = 'absolute';
@@ -423,11 +420,15 @@
             meas.textContent = '0'.repeat(80);
             document.body.appendChild(meas);
             const totalWidth = meas.getBoundingClientRect().width || 1;
-            const charWidth = totalWidth / 80;
+            const baseCharWidth = totalWidth / 80;
             document.body.removeChild(meas);
 
+            // Apply scale to the measured character width so box widths are computed at the larger size.
+            const charWidth = baseCharWidth * SCALE;
+
             // horizontal padding used when computing box widths; actual rendering uses CSS var --cell-hpad for precise spacing
-            const cellPadding = Math.max(4, Math.round(charWidth * 0.6));
+            const baseCellPadding = Math.max(4, Math.round(baseCharWidth * 0.6));
+            const cellPadding = Math.max(4, Math.round(baseCellPadding * SCALE));
 
             // IMPORTANT: For centered layout we DO NOT add brackets around tags.
             const tagLeft = (leftTeam.name || "Unknown");
@@ -452,16 +453,24 @@
 
             // Build DOM nodes
             const wrapper = document.createElement('div');
-            // apply the scaled class so the centered war layout is visually upscaled by ~50%
-            wrapper.className = 'war-center scaled';
+            wrapper.className = 'war-center';
+            // ensure no gap and prevent accidental margins/padding that could create seams
+            wrapper.style.gap = '0';
+            wrapper.style.margin = '0';
+            wrapper.style.padding = '0';
+            wrapper.style.overflow = 'visible';
 
             // Left Tag (Box A) - left aligned text inside
             const leftTagBox = document.createElement('div');
             leftTagBox.className = 'war-box tag';
             leftTagBox.style.width = boxAWidth + 'px';
             leftTagBox.style.textAlign = 'left';
+            leftTagBox.style.padding = (6 * SCALE) + 'px 0';
+            leftTagBox.style.margin = '0';
+            leftTagBox.style.boxSizing = 'border-box';
             const leftTagSpan = document.createElement('span');
             leftTagSpan.className = 'text left-align';
+            leftTagSpan.style.fontSize = (parseFloat(getComputedStyle(container).fontSize || '30') * SCALE) + 'px';
             leftTagSpan.textContent = tagLeft;
             leftTagBox.appendChild(leftTagSpan);
 
@@ -470,8 +479,12 @@
             leftScoreBox.className = 'war-box score';
             leftScoreBox.style.width = boxBWidth + 'px';
             leftScoreBox.style.textAlign = 'left';
+            leftScoreBox.style.padding = (6 * SCALE) + 'px 0';
+            leftScoreBox.style.margin = '0';
+            leftScoreBox.style.boxSizing = 'border-box';
             const leftScoreSpan = document.createElement('span');
             leftScoreSpan.className = 'text left-align';
+            leftScoreSpan.style.fontSize = (parseFloat(getComputedStyle(container).fontSize || '30') * SCALE) + 'px';
             leftScoreSpan.textContent = scoreLeft;
             leftScoreBox.appendChild(leftScoreSpan);
 
@@ -480,8 +493,13 @@
             raceBox.className = 'war-box race';
             raceBox.style.width = boxCWidth + 'px';
             raceBox.style.textAlign = 'center';
+            raceBox.style.padding = (6 * SCALE) + 'px 0';
+            raceBox.style.margin = '0';
+            raceBox.style.boxSizing = 'border-box';
             const raceSpan = document.createElement('span');
             raceSpan.className = 'text center-align';
+            // race label should be a bit smaller; apply scale but keep relative 0.6em
+            raceSpan.style.fontSize = (parseFloat(getComputedStyle(container).fontSize || '30') * SCALE * 0.6) + 'px';
             raceSpan.textContent = raceLabel;
             raceBox.appendChild(raceSpan);
 
@@ -490,8 +508,12 @@
             rightScoreBox.className = 'war-box score';
             rightScoreBox.style.width = boxBWidth + 'px';
             rightScoreBox.style.textAlign = 'right';
+            rightScoreBox.style.padding = (6 * SCALE) + 'px 0';
+            rightScoreBox.style.margin = '0';
+            rightScoreBox.style.boxSizing = 'border-box';
             const rightScoreSpan = document.createElement('span');
             rightScoreSpan.className = 'text right-align';
+            rightScoreSpan.style.fontSize = (parseFloat(getComputedStyle(container).fontSize || '30') * SCALE) + 'px';
             rightScoreSpan.textContent = scoreRight;
             rightScoreBox.appendChild(rightScoreSpan);
 
@@ -500,8 +522,12 @@
             rightTagBox.className = 'war-box tag';
             rightTagBox.style.width = boxAWidth + 'px';
             rightTagBox.style.textAlign = 'right';
+            rightTagBox.style.padding = (6 * SCALE) + 'px 0';
+            rightTagBox.style.margin = '0';
+            rightTagBox.style.boxSizing = 'border-box';
             const rightTagSpan = document.createElement('span');
             rightTagSpan.className = 'text right-align';
+            rightTagSpan.style.fontSize = (parseFloat(getComputedStyle(container).fontSize || '30') * SCALE) + 'px';
             rightTagSpan.textContent = tagRight;
             rightTagBox.appendChild(rightTagSpan);
 
@@ -516,7 +542,7 @@
             container.innerHTML = '';
             container.appendChild(wrapper);
 
-            // ensure the table-stats container centers the inline-flex wrapper and allows overflow for scaled content
+            // ensure the table-stats container centers the inline-flex wrapper and allows overflow for larger content
             container.style.textAlign = 'center';
             container.style.overflow = 'visible';
         }
