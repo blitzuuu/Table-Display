@@ -1,116 +1,463 @@
-<!-- JS changes: treat `name` as matching team.name OR players, and give war-center spans highlight/normal classes -->
-<script>
-  // Helper to check player membership or a team-name match (case-insensitive)
-  function playerInTeam(team, player) {
-      if (!player) return false;
-      const lower = player.toLowerCase();
-      // match against any player name
-      if (Array.isArray(team.players) && team.players.some(p => p.toLowerCase() === lower)) return true;
-      // also match when the provided name equals the team name
-      if ((team.name || "").toLowerCase() === lower) return true;
-      return false;
-  }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Display</title>
+    <style>
+        /* Prevent any scrollbars from appearing in the overlay */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* ensure no scrollbars */
+            background-color: transparent;
+            font-family: 'Roboto Mono', monospace;
+        }
 
-  // ...other functions unchanged...
+        :root {
+            --cell-hpad: 12px; /* horizontal distance from inner cell wall to text (keeps left/right symmetric) */
+        }
 
-  function renderWarCenter(container, parsed, playerName) {
-      // Safety checks
-      if (!parsed || parsed.type !== 'teams' || parsed.teams.length !== 2) return;
+        /* Make the element exactly 1920px wide so OBS doesn't need adjustments */
+        #table-stats {
+            position: absolute;
+            top: 10px;
+            left: 0; /* anchor to left to match a 1920px wide element */
+            width: 1920px;
+            font-size: 30px; /* Base font size */
+            font-weight: 500;
+            box-sizing: border-box;
+            padding: 0 10px;
+            /* allow normal wrapping/layout for war-center */
+            white-space: normal;
+            overflow: visible; /* allow composed elements to overflow visually without creating scrollbars */
+            text-align: center; /* default center when using centered war layout */
+        }
 
-      // helper to test if a team contains the player or matches the team name (case-insensitive)
-      function teamHasPlayerOrName(team, playerName) {
-          if (!playerName) return false;
-          const lower = playerName.toLowerCase();
-          if (Array.isArray(team.players) && team.players.some(p => p.toLowerCase() === lower)) return true;
-          if ((team.name || "").toLowerCase() === lower) return true;
-          return false;
-      }
+        /* Default styling for text (dark grey text, black highlight) */
+        .dark-mode .text-highlight {
+            color: black; /* Highlighted text (e.g., player's score) */
+        }
+        .dark-mode .text-normal {
+            color: #444444; /* Dark grey text for other elements */
+        }
+        /* Styling for &white parameter (light grey text, white highlight) */
+        .white-mode .text-highlight {
+            color: white; /* Highlighted text (e.g., player's score) */
+        }
+        .white-mode .text-normal {
+            color: #bebebe; /* Light grey text for other elements */
+        }
 
-      const teamA = parsed.teams[0];
-      const teamB = parsed.teams[1];
+        /* Flex container used for centered war layout
+           Use inline-flex so the outer border only wraps the content width
+           Remove internal gap and wrapper padding so cell backgrounds meet each other
+           and touch the top/bottom of the outer border. */
+        .war-center {
+            display: inline-flex;
+            justify-content: center;
+            align-items: stretch; /* stretch children to fill vertical space so backgrounds reach top/bottom */
+            gap: 0;                 /* no gap so backgrounds are flush against each other */
+            border: 2px solid #333333; /* dark grey outer border */
+            border-radius: 6px;
+            padding: 0; /* no inner padding so children backgrounds touch the outer border */
+            background: transparent;
+            box-sizing: border-box;
+            overflow: hidden; /* ensures children backgrounds are clipped to rounded corners */
+        }
 
-      // Decide left/right team (unchanged)
-      let leftTeam, rightTeam;
-      const aHas = teamHasPlayerOrName(teamA, playerName);
-      const bHas = teamHasPlayerOrName(teamB, playerName);
+        /* Box styles */
+        .war-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            /* vertical padding retained to create height while horizontal padding is handled on the inner text element
+               so we can guarantee equal horizontal offsets from each cell's wall. */
+            padding: 6px 0;
+            min-height: 1em;
+            border: none; /* no inner borders */
+            margin: 0;
+            line-height: 1;
+            white-space: nowrap;
+        }
 
-      if (aHas && !bHas) {
-          leftTeam = teamA; rightTeam = teamB;
-      } else if (bHas && !aHas) {
-          leftTeam = teamB; rightTeam = teamA;
-      } else {
-          const aName = (teamA.name || "").toLowerCase();
-          const bName = (teamB.name || "").toLowerCase();
-          if (aName.localeCompare(bName) <= 0) { leftTeam = teamA; rightTeam = teamB; }
-          else { leftTeam = teamB; rightTeam = teamA; }
-      }
+        /* Background colors for each cell type (centered/war layout) */
+        .war-center .war-box.tag {
+            background: #000000; /* black for tag cells */
+        }
+        .war-center .war-box.score {
+            background: #6f6f6f; /* less dark grey for score cells */
+        }
+        .war-center .war-box.race {
+            background: #dcdcdc; /* light grey for race count cell */
+        }
 
-      // ...measuring code unchanged...
+        /* Ensure text colors contrast with the backgrounds in war-center */
+        .war-center .war-box.tag .text {
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .war-center .war-box.score .text {
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .war-center .war-box.race .text {
+            color: #000000;
+            font-weight: 700;
+        }
 
-      // Build DOM nodes
-      const wrapper = document.createElement('div');
-      wrapper.className = 'war-center';
+        .war-box .text {
+            display: block;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 600;
+            line-height: 1;
+            white-space: nowrap;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
-      // Left Tag (Box A)
-      const leftTagBox = document.createElement('div');
-      leftTagBox.className = 'war-box tag';
-      leftTagBox.style.width = boxAWidth + 'px';
-      leftTagBox.style.textAlign = 'left';
-      const leftTagSpan = document.createElement('span');
-      // apply highlight or normal class so CSS color rules apply consistently
-      leftTagSpan.className = 'text left-align ' + (aHas ? 'text-highlight' : 'text-normal');
-      leftTagSpan.textContent = tagLeft;
-      leftTagBox.appendChild(leftTagSpan);
+        .war-box.tag .text { /* Box A styling */
+            font-weight: 700;
+        }
 
-      // Left Score (Box B)
-      const leftScoreBox = document.createElement('div');
-      leftScoreBox.className = 'war-box score';
-      leftScoreBox.style.width = boxBWidth + 'px';
-      leftScoreBox.style.textAlign = 'left';
-      const leftScoreSpan = document.createElement('span');
-      leftScoreSpan.className = 'text left-align ' + (aHas ? 'text-highlight' : 'text-normal');
-      leftScoreSpan.textContent = scoreLeft;
-      leftScoreBox.appendChild(leftScoreSpan);
+        .war-box.score .text { /* Box B styling */
+            font-weight: 700;
+        }
 
-      // Race Count (Box C)
-      const raceBox = document.createElement('div');
-      raceBox.className = 'war-box race';
-      raceBox.style.width = boxCWidth + 'px';
-      raceBox.style.textAlign = 'center';
-      const raceSpan = document.createElement('span');
-      raceSpan.className = 'text center-align';
-      raceSpan.textContent = raceLabel;
-      raceBox.appendChild(raceSpan);
+        .war-box.race .text { /* Box C styling: slightly smaller */
+            font-weight: 700;
+            line-height: 1;
+        }
 
-      // Right Score (Box B)
-      const rightScoreBox = document.createElement('div');
-      rightScoreBox.className = 'war-box score';
-      rightScoreBox.style.width = boxBWidth + 'px';
-      rightScoreBox.style.textAlign = 'right';
-      const rightScoreSpan = document.createElement('span');
-      rightScoreSpan.className = 'text right-align ' + (bHas ? 'text-highlight' : 'text-normal');
-      rightScoreSpan.textContent = scoreRight;
-      rightScoreBox.appendChild(rightScoreSpan);
+        /* Text alignment helpers inside each box -
+           IMPORTANT: horizontal spacing from edges is controlled via these paddings
+           so left and right score texts are the same distance from their outer cell walls. */
+        .left-align { text-align: left; padding-left: var(--cell-hpad); box-sizing: border-box; }
+        .right-align { text-align: right; padding-right: var(--cell-hpad); box-sizing: border-box; }
+        .center-align { text-align: center; box-sizing: border-box; padding-left: var(--cell-hpad); padding-right: var(--cell-hpad); }
 
-      // Right Tag (Box A)
-      const rightTagBox = document.createElement('div');
-      rightTagBox.className = 'war-box tag';
-      rightTagBox.style.width = boxAWidth + 'px';
-      rightTagBox.style.textAlign = 'right';
-      const rightTagSpan = document.createElement('span');
-      rightTagSpan.className = 'text right-align ' + (bHas ? 'text-highlight' : 'text-normal');
-      rightTagSpan.textContent = tagRight;
-      rightTagBox.appendChild(rightTagSpan);
+        /* smaller visual tweak for the race label so it sits nicely */
+        .war-box.race .text { font-size: 0.6em; display:inline-block; transform: translateY(4px); }
+    </style>
+</head>
+<body>
+    <div id="table-stats"></div>
 
-      // Append in order...
-      wrapper.appendChild(leftTagBox);
-      wrapper.appendChild(leftScoreBox);
-      wrapper.appendChild(raceBox);
-      wrapper.appendChild(rightScoreBox);
-      wrapper.appendChild(rightTagBox);
+    <script>
+        // Utility: format tags consistently
+        function formatTag(tag) {
+            if (!tag) return "[Unknown]";
+            if (tag.startsWith('[') && tag.endsWith(']')) return tag;
+            return `[${tag}]`;
+        }
 
-      container.innerHTML = '';
-      container.appendChild(wrapper);
-      container.style.textAlign = 'center';
-  }
-</script>
+        async function fetchAndRenderData() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const tableId = urlParams.get("tableid");
+                const playerName = urlParams.get("name");
+                const align = (urlParams.get("align") || "left").toLowerCase();
+
+                // styling mode
+                if (urlParams.has("white")) {
+                    document.body.classList.add("white-mode");
+                    document.body.classList.remove("dark-mode");
+                } else {
+                    document.body.classList.add("dark-mode");
+                    document.body.classList.remove("white-mode");
+                }
+
+                if (!tableId) {
+                    document.getElementById("table-stats").innerHTML = "";
+                    return;
+                }
+
+                const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.live/api/html/full_scores/${tableId}`);
+                if (!tableResponse.ok) {
+                    document.getElementById("table-stats").innerHTML = "";
+                    return;
+                }
+
+                const tableHTML = await tableResponse.text();
+                const parsed = parseTableData(tableHTML);
+
+                // compute effectiveAlign: allow center only when teams length === 2
+                let effectiveAlign;
+                if (align === 'center') {
+                    if (parsed && parsed.type === 'teams' && Array.isArray(parsed.teams) && parsed.teams.length === 2) {
+                        effectiveAlign = 'center';
+                    } else {
+                        effectiveAlign = 'left';
+                    }
+                } else if (align === 'right') {
+                    effectiveAlign = 'right';
+                } else {
+                    effectiveAlign = 'left';
+                }
+
+                render(parsed, effectiveAlign, playerName);
+            } catch (error) {
+                console.error("Error fetching or rendering data:", error);
+                document.getElementById("table-stats").innerHTML = "";
+            }
+        }
+
+        // Parse table HTML into a structured object
+        function parseTableData(rawHTML) {
+            const temp = document.createElement("div");
+            temp.innerHTML = rawHTML;
+
+            const raceInfo = temp.querySelector(".races_played")?.textContent || "";
+            const raceMatch = raceInfo.match(/(\d+)\s*races?/i);
+            const raceNumber = raceMatch ? raceMatch[1] : "1";
+
+            const format = temp.querySelector(".format")?.textContent.trim() || "Unknown";
+
+            if (format === "FFA") {
+                const players = Array.from(temp.querySelectorAll(".player_wrapper")).map(player => {
+                    const pName = player.querySelector(".player_name")?.textContent.trim() || "Unknown";
+                    const pTotal = parseInt(player.querySelector(".player_total")?.textContent.trim() || "0", 10);
+                    return { name: pName, total: pTotal };
+                });
+                players.sort((a,b) => b.total - a.total);
+                return { type: 'ffa', raceNumber, format, players };
+            } else {
+                const teams = Array.from(temp.querySelectorAll(".team_wrapper")).map(team => {
+                    const teamName = team.querySelector(".team_name")?.textContent.trim() || "Unknown";
+                    const teamScore = team.querySelector(".team_score")?.textContent.trim() || "0";
+                    const players = Array.from(team.querySelectorAll(".player_name")).map(p => p.textContent.trim());
+                    return { name: teamName, score: teamScore, players };
+                });
+
+                return { type: 'teams', raceNumber, format, teams };
+            }
+        }
+
+        // Render structured data according to effectiveAlign ('left'|'right'|'center')
+        function render(parsed, effectiveAlign, playerName) {
+            const container = document.getElementById("table-stats");
+            container.innerHTML = "";
+
+            if (!parsed) return;
+
+            // Helper to check player membership or team-name match (case-insensitive, tolerant of bracketed tags)
+            function playerInTeam(team, player) {
+                if (!player) return false;
+                const lower = player.toLowerCase().trim();
+
+                // match against any player name
+                if (Array.isArray(team.players) && team.players.some(p => (p || "").toLowerCase().trim() === lower)) return true;
+
+                // match against team name; allow matching with or without surrounding brackets
+                const t = (team.name || "").trim();
+                const tPlain = (t.startsWith('[') && t.endsWith(']')) ? t.slice(1, -1).trim().toLowerCase() : t.toLowerCase();
+                if (tPlain === lower) return true;
+                if (t.toLowerCase() === lower) return true;
+
+                return false;
+            }
+
+            if (parsed.type === 'ffa') {
+                // FFA rendering: highlight the set player if present (use text-highlight)
+                const playerScores = parsed.players.map(player => {
+                    const isMatch = playerName && (player.name || "").toLowerCase().trim() === (playerName || "").toLowerCase().trim();
+                    const cls = isMatch ? 'text-highlight' : 'text-normal';
+                    return `<span class="${cls}">${player.total}</span>`;
+                });
+                container.innerHTML = `<span class="text-normal">R${parsed.raceNumber}</span> <span class="text-normal">|</span> ${playerScores.join('<span class="text-normal">, </span>')}`;
+                container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
+                return;
+            }
+
+            // Teams rendering
+            if (effectiveAlign === 'center' && parsed.type === 'teams' && parsed.teams.length === 2) {
+                // Do not modify centered war layout behavior — keep it as-is
+                renderWarCenter(container, parsed, playerName);
+                return;
+            }
+
+            // Default teams rendering (left/right/center simple join) - apply highlighting for the team containing player or matching team name
+            const teamParts = parsed.teams.map(team => {
+                const isMatch = playerName && playerInTeam(team, playerName);
+                const cls = isMatch ? 'text-highlight' : 'text-normal';
+                return `<span class="${cls}">${formatTag(team.name)} ${team.score}</span>`;
+            });
+
+            container.innerHTML = `<span class="text-normal">R${parsed.raceNumber}</span> <span class="text-normal">|</span> ${teamParts.join('<span class="text-normal"> | </span>')}`;
+
+            container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
+        }
+
+        // Build the special "Centered (War)" layout in DOM (not plain HTML string)
+        function renderWarCenter(container, parsed, playerName) {
+            // Safety checks
+            if (!parsed || parsed.type !== 'teams' || parsed.teams.length !== 2) return;
+
+            // helper to test if a team contains the player (case-insensitive)
+            function teamHasPlayer(team, playerName) {
+                if (!playerName) return false;
+                const lower = playerName.toLowerCase();
+                return Array.isArray(team.players) && team.players.some(p => p.toLowerCase() === lower);
+            }
+
+            const teamA = parsed.teams[0];
+            const teamB = parsed.teams[1];
+
+            // Decide left/right team:
+            // - If exactly one team contains the set player -> that team on the left.
+            // - Otherwise -> left = first team alphabetically (by team.name, case-insensitive).
+            let leftTeam, rightTeam;
+            const aHas = teamHasPlayer(teamA, playerName);
+            const bHas = teamHasPlayer(teamB, playerName);
+
+            if (aHas && !bHas) {
+                leftTeam = teamA; rightTeam = teamB;
+            } else if (bHas && !aHas) {
+                leftTeam = teamB; rightTeam = teamA;
+            } else {
+                // alphabetical by name (case-insensitive)
+                const aName = (teamA.name || "").toLowerCase();
+                const bName = (teamB.name || "").toLowerCase();
+                if (aName.localeCompare(bName) <= 0) { leftTeam = teamA; rightTeam = teamB; }
+                else { leftTeam = teamB; rightTeam = teamA; }
+            }
+
+            // Measure monospace character width at the container font-size.
+            const meas = document.createElement('span');
+            meas.style.position = 'absolute';
+            meas.style.left = '-9999px';
+            meas.style.top = '-9999px';
+            meas.style.visibility = 'hidden';
+            meas.style.fontFamily = getComputedStyle(container).fontFamily || 'Roboto Mono, monospace';
+            meas.style.fontSize = getComputedStyle(container).fontSize || '30px';
+            meas.style.fontWeight = getComputedStyle(container).fontWeight || '500';
+            meas.textContent = '0'.repeat(80);
+            document.body.appendChild(meas);
+            const totalWidth = meas.getBoundingClientRect().width || 1;
+            const charWidth = totalWidth / 80;
+            document.body.removeChild(meas);
+
+            // horizontal padding used when computing box widths; actual rendering uses CSS var --cell-hpad for precise spacing
+            const cellPadding = Math.max(4, Math.round(charWidth * 0.6));
+
+            // IMPORTANT: For centered layout we DO NOT add brackets around tags.
+            const tagLeft = (leftTeam.name || "Unknown");
+            const tagRight = (rightTeam.name || "Unknown");
+            const scoreLeft = leftTeam.score;
+            const scoreRight = rightTeam.score;
+            // Race label now contains only the race count (format removed)
+            const raceLabel = `R${parsed.raceNumber}`;
+
+            // enforce minimum tag width of 3 characters, grow for longer tags
+            const minTagChars = 3;
+            const lenTagLeft = Math.max(minTagChars, tagLeft.length);
+            const lenTagRight = Math.max(minTagChars, tagRight.length);
+            const boxAChars = Math.max(lenTagLeft, lenTagRight); // Box A: width based on larger tag (and min 3)
+            const boxAWidth = Math.ceil(boxAChars * charWidth) + cellPadding * 2;
+
+            const boxBChars = 3; // 3 character widths for score cells
+            const boxBWidth = Math.ceil(boxBChars * charWidth) + cellPadding * 2;
+
+            const boxCChars = Math.max(1, Math.floor(boxBChars * 0.8)); // slightly smaller than B
+            const boxCWidth = Math.ceil(boxCChars * charWidth) + cellPadding * 2;
+
+            // Build DOM nodes
+            const wrapper = document.createElement('div');
+            wrapper.className = 'war-center';
+
+            // Left Tag (Box A) - left aligned text inside
+            const leftTagBox = document.createElement('div');
+            leftTagBox.className = 'war-box tag';
+            leftTagBox.style.width = boxAWidth + 'px';
+            leftTagBox.style.textAlign = 'left';
+            const leftTagSpan = document.createElement('span');
+            leftTagSpan.className = 'text left-align';
+            leftTagSpan.textContent = tagLeft;
+            leftTagBox.appendChild(leftTagSpan);
+
+            // Left Score (Box B) - left aligned (same offset from its left edge as right score is from its right edge)
+            const leftScoreBox = document.createElement('div');
+            leftScoreBox.className = 'war-box score';
+            leftScoreBox.style.width = boxBWidth + 'px';
+            leftScoreBox.style.textAlign = 'left';
+            const leftScoreSpan = document.createElement('span');
+            leftScoreSpan.className = 'text left-align';
+            leftScoreSpan.textContent = scoreLeft;
+            leftScoreBox.appendChild(leftScoreSpan);
+
+            // Race Count (Box C) - center aligned
+            const raceBox = document.createElement('div');
+            raceBox.className = 'war-box race';
+            raceBox.style.width = boxCWidth + 'px';
+            raceBox.style.textAlign = 'center';
+            const raceSpan = document.createElement('span');
+            raceSpan.className = 'text center-align';
+            raceSpan.textContent = raceLabel;
+            raceBox.appendChild(raceSpan);
+
+            // Right Score (Box B) - right aligned (same offset from its right edge as left score from left edge)
+            const rightScoreBox = document.createElement('div');
+            rightScoreBox.className = 'war-box score';
+            rightScoreBox.style.width = boxBWidth + 'px';
+            rightScoreBox.style.textAlign = 'right';
+            const rightScoreSpan = document.createElement('span');
+            rightScoreSpan.className = 'text right-align';
+            rightScoreSpan.textContent = scoreRight;
+            rightScoreBox.appendChild(rightScoreSpan);
+
+            // Right Tag (Box A) - right aligned
+            const rightTagBox = document.createElement('div');
+            rightTagBox.className = 'war-box tag';
+            rightTagBox.style.width = boxAWidth + 'px';
+            rightTagBox.style.textAlign = 'right';
+            const rightTagSpan = document.createElement('span');
+            rightTagSpan.className = 'text right-align';
+            rightTagSpan.textContent = tagRight;
+            rightTagBox.appendChild(rightTagSpan);
+
+            // Append in order: leftTag, leftScore, race, rightScore, rightTag
+            wrapper.appendChild(leftTagBox);
+            wrapper.appendChild(leftScoreBox);
+            wrapper.appendChild(raceBox);
+            wrapper.appendChild(rightScoreBox);
+            wrapper.appendChild(rightTagBox);
+
+            // clear container and append
+            container.innerHTML = '';
+            container.appendChild(wrapper);
+
+            // ensure the table-stats container centers the inline-flex wrapper
+            container.style.textAlign = 'center';
+        }
+
+        // Listen for config changes
+        const channel = new BroadcastChannel("table_config_channel");
+        channel.addEventListener("message", (event) => {
+            const { name, tableid, align } = event.data;
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.get("name") === name) {
+                if (typeof tableid !== "undefined") {
+                    if (tableid === "") urlParams.delete("tableid");
+                    else urlParams.set("tableid", tableid);
+                }
+                if (typeof align !== "undefined") {
+                    if (align === "" || align === null) urlParams.delete("align");
+                    else urlParams.set("align", align);
+                }
+
+                const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+                window.history.replaceState(null, "", newUrl);
+
+                if (urlParams.get("tableid")) fetchAndRenderData();
+                else document.getElementById("table-stats").innerHTML = "";
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", fetchAndRenderData);
+        setInterval(fetchAndRenderData, 5000);
+    </script>
+</body>
+</html>
