@@ -160,11 +160,13 @@
   </div>
 
   <script>
+    // local storage key used by overlay/dock
+    const PREF_KEY = 'mkw_overlay_prefs_v1';
+
     document.addEventListener("DOMContentLoaded", async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const name = urlParams.get("name");
       const currentTableId = urlParams.get("tableid") || "";
-      // Respect explicit align first; if missing, use defaultalign; otherwise fallback to left.
       const explicitAlign = urlParams.get("align");
       const defaultAlign = urlParams.get("defaultalign");
       const currentAlign = (explicitAlign || defaultAlign || "left").toLowerCase();
@@ -212,30 +214,19 @@
       // and restore original text after 3s. This fixes the issue where the Update
       // button sometimes remained a checkmark permanently.
       function showCheckmark(button) {
-        // clear any previously scheduled restore for this button
         if (button.dataset._checkTimeoutId) {
           clearTimeout(Number(button.dataset._checkTimeoutId));
           delete button.dataset._checkTimeoutId;
         }
-
-        // store original HTML if not already stored
         if (!button.dataset._originalHtml) {
           button.dataset._originalHtml = button.innerHTML;
         }
-
-        // set checkmark
         button.innerHTML = "<b>✔</b>";
-
-        // schedule restore
         const id = setTimeout(() => {
-          // restore original HTML (fallback to literal "Update"/"Reset" if missing)
           button.innerHTML = button.dataset._originalHtml || (button.classList.contains('update') ? 'Update' : 'Reset');
-          // clean up dataset keys so future clicks behave the same
           delete button.dataset._checkTimeoutId;
           delete button.dataset._originalHtml;
         }, 3000);
-
-        // save timeout id so we can clear it if the button is clicked again quickly
         button.dataset._checkTimeoutId = String(id);
       }
 
@@ -266,11 +257,15 @@
       });
 
       resetBtn.addEventListener("click", () => {
-        resetInput();
-        const channel = new BroadcastChannel("table_config_channel");
-        channel.postMessage({ name, tableid: "", align: alignValueInput.value || "left" });
+        // Remove local prefs in this dock (so dock UI also resets)
+        try { localStorage.removeItem(PREF_KEY); } catch(e){ /* ignore */ }
 
-        // show checkmark and restore after timeout (robust)
+        // Broadcast a clear instruction to overlays with this name
+        const channel = new BroadcastChannel("table_config_channel");
+        channel.postMessage({ name, clear: true });
+
+        // Clear the input locally and show checkmark
+        resetInput();
         showCheckmark(resetBtn);
       });
     });
