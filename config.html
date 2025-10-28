@@ -164,7 +164,10 @@
       const urlParams = new URLSearchParams(window.location.search);
       const name = urlParams.get("name");
       const currentTableId = urlParams.get("tableid") || "";
-      const currentAlign = (urlParams.get("align") || "left").toLowerCase();
+      // Respect explicit align first; if missing, use defaultalign; otherwise fallback to left.
+      const explicitAlign = urlParams.get("align");
+      const defaultAlign = urlParams.get("defaultalign");
+      const currentAlign = (explicitAlign || defaultAlign || "left").toLowerCase();
 
       const tableIdInput = document.getElementById("tableid-input");
       const alignValueInput = document.getElementById("align-value");
