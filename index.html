@@ -562,7 +562,7 @@
             const urlParams = new URLSearchParams(window.location.search);
 
             // If overlay receives a clear instruction targeted at its name, remove saved prefs and clear displayed table
-            if (clear === true && urlParams.get("name") === name) {
+            if (clear === true) {
                 try { localStorage.removeItem(PREF_KEY); } catch (e) { /* ignore */ }
                 urlParams.delete("tableid");
                 const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
