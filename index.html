@@ -245,7 +245,7 @@
                     return;
                 }
 
-                const tableResponse = await fetch(`https://mkw-table-bot-api.jprq.live/api/html/full_scores/${tableId}`);
+                const tableResponse = await fetch(`https://backup-tablebot.mp-mousse.uk/api/html/full_scores/${tableId}`);
                 if (!tableResponse.ok) {
                     console.warn('Fetch failed for', tableId, tableResponse.status);
                     document.getElementById("table-stats").innerHTML = "";
