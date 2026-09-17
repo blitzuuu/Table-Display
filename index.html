@@ -180,20 +180,9 @@
             return `[${tag}]`;
         }
 
-        // Shrinks the container's font-size just enough that its current content
-        // fits within maxWidth on one line, instead of overflowing/getting clipped.
-        // Assumes container.innerHTML has already been populated and white-space is nowrap.
-        const BASE_FONT_SIZE = 30; // matches the default font-size set on #table-stats in CSS
-        function fitTextToWidth(container, maxWidth) {
-            container.style.fontSize = BASE_FONT_SIZE + 'px';
-            const contentWidth = container.scrollWidth;
-            if (contentWidth > maxWidth) {
-                // small safety margin (0.98) so text doesn't sit flush against the edge
-                const scale = (maxWidth / contentWidth) * 0.98;
-                const newSize = Math.max(8, Math.floor(BASE_FONT_SIZE * scale * 100) / 100);
-                container.style.fontSize = newSize + 'px';
-            }
-        }
+        // Base font size, matches the default font-size set on #table-stats in CSS.
+        // Used by scroll mode so ticker content always renders at full size.
+        const BASE_FONT_SIZE = 30;
 
         // How fast the ticker moves, in pixels per second, at full (base) font size.
         // Kept constant so a short line and a long line both feel like the same "speed",
@@ -516,12 +505,6 @@
                 container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
                 // non-centered outputs should keep default top gap
                 container.style.top = '10px';
-                // If fitwidth grew the box past the visible screen, clamp it back and
-                // shrink the font instead — keeps everything on one line, nothing clipped.
-                if (fitWidth && container.scrollWidth > MAX_SCREEN_WIDTH) {
-                    container.style.width = MAX_SCREEN_WIDTH + 'px';
-                    fitTextToWidth(container, MAX_SCREEN_WIDTH);
-                }
                 return;
             }
 
@@ -555,11 +538,6 @@
             container.style.textAlign = effectiveAlign === 'right' ? 'right' : (effectiveAlign === 'center' ? 'center' : 'left');
             // keep default top gap for non-centered layouts
             container.style.top = '10px';
-            // Same overflow guard as the FFA branch above.
-            if (fitWidth && container.scrollWidth > MAX_SCREEN_WIDTH) {
-                container.style.width = MAX_SCREEN_WIDTH + 'px';
-                fitTextToWidth(container, MAX_SCREEN_WIDTH);
-            }
         }
 
         // Build the special "Centered (War)" layout in DOM (not plain HTML string)
